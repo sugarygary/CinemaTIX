@@ -1,44 +1,34 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class Tiket extends Model {
+  class History extends Model {
     static associate(models) {
-      this.belongsTo(models.Jadwal, {
-        foreignKey: "id_jadwal",
+      this.belongsTo(models.Marketplace, {
+        foreignKey: "id_marketplace",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       });
-      this.hasOne(models.History, {
+      this.belongsTo(models.Tiket, {
         foreignKey: "id_tiket",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       });
     }
   }
-  Tiket.init(
+  History.init(
     {
-      id_tiket: {
+      id_jadwal: {
         type: DataTypes.STRING,
         allowNull: false,
-        primaryKey: true,
-      },
-      nomor_kursi: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      status: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
       },
     },
     {
       sequelize,
-      modelName: "Tiket",
-      tableName: "tiket",
+      modelName: "History",
+      tableName: "history",
       freezeTableName: true,
       timestamps: false,
     }
   );
-  return Tiket;
+  return History;
 };
