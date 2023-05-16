@@ -38,6 +38,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      id_bioskop: {
+        type: DataTypes.STRING,
+        allowNull: false,
+
+      },
     },
     {
       sequelize,
