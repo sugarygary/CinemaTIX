@@ -4,6 +4,6 @@ const bioskopRouter = require("./bioskopRouter");
 const router = express.Router();
 
 router.use("/users", userRouter);
-router.use("/bioskops", bioskopRouter);
+router.use("/bioskop", bioskopRouter);
 
 module.exports = router;

@@ -3,12 +3,13 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn("studio", "id_bioskop", {
-      type: Sequelize.DataTypes.STRING,
+    await queryInterface.addColumn("cabang", "nama", {
+      type: Sequelize.STRING,
+      allowNull: false,
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeColumn("studio", "id_bioskop");
+    await queryInterface.removeColumn("cabang", "nama");
   },
 };

@@ -5,13 +5,13 @@ const Joi = require("joi");
 
 const {
   registerCabang,
-  registerStudio
-} = require('../controllers/bioskopController')
+  registerStudio,
+  validateBioskopAPIKey,
+  registerJadwal,
+} = require("../controllers/bioskopController");
 
-
-bioskopRouter.post("/register-cabang", registerCabang );
-bioskopRouter.post("/register-studio", registerStudio );
-
-
+bioskopRouter.post("/register-cabang", validateBioskopAPIKey, registerCabang);
+bioskopRouter.post("/register-studio", validateBioskopAPIKey, registerStudio);
+bioskopRouter.post("/register-jadwal", validateBioskopAPIKey, registerJadwal);
 
 module.exports = bioskopRouter;
