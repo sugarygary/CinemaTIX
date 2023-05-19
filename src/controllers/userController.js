@@ -201,8 +201,62 @@ const registerWebReview = async (req, res) => {
     return res.status(400).send(error.message);
   }
 }
+const checkLogin_WebReview_username = async (username) => {
+  const u = await db.WebReview.findOne({
+    where: {
+      username: username,
+    },
+  });
+  if (u) {
+    return username;
+  } else {
+    throw new Error("username invalid");
+  }
+};
 const loginWebReview = async (req, res) => {
+  const validator = Joi.object({
+    username: Joi.string()
+      .external(checkLogin_WebReview_username)
+      .required()
+      .label("username Pengguna")
+      .messages({
+        "any.required": "{{#label}} harus diisi yaa",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+    password: Joi.string()
+      .required()
+      .alphanum()
+      .min(5)
+      .label("Password Pengguna")
+      .messages({
+        "any.required": "{{#label}} harus diisi yaa",
+        "string.min": "{{#label}} harus setidaknya 5 karakter",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+  });
+  try {
+    const validationResult = await validator.validateAsync(req.body);
 
+    const u = await db.WebReview.findOne({
+      where: {
+        username: validationResult.username,
+        password: validationResult.password,
+      },
+    });
+    if (u) {
+      return res.status(200).send({
+        msg: "Berhasil Login",
+        username: u.username,
+        api_key: u.api_key,
+      });
+    } else {
+      return res.status(400).send({
+        msg: "Gagal Login",
+      });
+    }
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
 }
 
 module.exports = {
