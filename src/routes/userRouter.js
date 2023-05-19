@@ -6,15 +6,16 @@ const Joi = require("joi");
 const {
   registerBioskop,
   // registerMarketplace,
-  // registerWebreview,
+  registerWebReview,
   loginBioskop,
   // loginMarketplace,
-  // loginWebreview,
+  loginWebReview,
 } = require('../controllers/userController')
 
 
 userRouter.post("/register-bioskop",registerBioskop );
-
 userRouter.post("/login-bioskop",loginBioskop );
+userRouter.post("/register-webreview",registerWebReview );
+userRouter.post("/login-webreview",loginWebReview );
 
 module.exports = userRouter;

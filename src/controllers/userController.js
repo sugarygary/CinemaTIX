@@ -137,12 +137,79 @@ const loginBioskop = async (req, res) => {
     return res.status(400).send(error.message);
   }
 };
+const checkUniqueWebReview_username = async (username) => {
+  const u = await db.WebReview.findOne({
+    where: {
+      username: username,
+    },
+  });
+  if (u) {
+    throw new Error("WebReview_username is not unique");
+  } else {
+    return username;
+  }
+};
+const registerWebReview = async (req, res) => {
+  const validator = Joi.object({
+    nama_web_review: Joi.string().required().label("Nama Web Review").messages({
+      "any.required": "{{#label}} harus ada",
+      "string.empty": "{{#label}} tidak boleh blank",
+    }),
+    username: Joi.string()
+      .external(checkUniqueWebReview_username)
+      .required()
+      .label("username Pengguna")
+      .messages({
+        "any.required": "{{#label}} harus diisi",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+
+    password: Joi.string()
+      .required()
+      .alphanum()
+      .min(5)
+      .label("Password Pengguna")
+      .messages({
+        "any.required": "{{#label}} harus diisi",
+        "string.min": "{{#label}} harus setidaknya 5 karakter",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+  });
+  try {
+    const validationResult = await validator.validateAsync(req.body);
+    let ctrID = (await db.WebReview.max("id_web_review")) || "WR000";
+    console.log(ctrID)
+    let intID = parseInt(ctrID.substring(2)) + 1;
+    console.log(intID)
+    let new_id = "WR" + intID.toString().padStart(3, "0");
+    console.log(new_id)
+    let api_key = randomApiKey(10);
+    user = await db.WebReview.create({
+      id_web_review: new_id,
+      username: validationResult.username,
+      nama_web_review: validationResult.nama_web_review,
+      password: validationResult.password,
+      api_key: api_key,
+    });
+
+    return res.status(201).send({
+      msg: "akun berhasil dibuat",
+      username: validationResult.username,
+      nama_web_review: validationResult.nama_web_review,
+    });
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+}
+const loginWebReview = async (req, res) => {
+
+}
 
 module.exports = {
   registerBioskop,
   // registerMarketplace,
-  // registerWebreview,
+  registerWebReview,
   loginBioskop,
   // loginMarketplace,
-  // loginWebreview,
+  loginWebReview,
 };
