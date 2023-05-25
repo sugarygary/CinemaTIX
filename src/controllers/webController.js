@@ -27,16 +27,15 @@ const queryBioskop = async (req, res) => {
                 bukti_pembayaran: webReview.username
             },
         });
-        let tmp = cekBayar.tanggal_pembayaran;
 
-        let bulan = tmp.substr(5, 2);
-        let tanggal = tmp.substr(8, 2);
-        let today = new Date();
-        var month = today.getMonth()+1;
-        var date = today.getDate();
-
-        if ((parseInt(month) == parseInt(bulan) && parseInt(date) > parseInt(tanggal)) || (parseInt(month) > parseInt(bulan) && parseInt(date) <= parseInt(tanggal)) || ((parseInt(month) == parseInt(bulan) && parseInt(date) == parseInt(tanggal)))) {
-            if (cekBayar != null) {
+        if (cekBayar != null) {
+            let tmp = cekBayar.tanggal_pembayaran;
+            let bulan = tmp.substr(5, 2);
+            let tanggal = tmp.substr(8, 2);
+            let today = new Date();
+            var month = today.getMonth()+1;
+            var date = today.getDate();
+            if ((parseInt(month) == parseInt(bulan) && parseInt(date) > parseInt(tanggal)) || (parseInt(month) > parseInt(bulan) && parseInt(date) <= parseInt(tanggal)) || ((parseInt(month) == parseInt(bulan) && parseInt(date) == parseInt(tanggal)))) {
                 if (webReview != null) {
                     if (validationResult.nama_bioskop != null) {
                         const idBioskop = await db.Bioskop.findOne({
@@ -102,7 +101,7 @@ const queryBioskop = async (req, res) => {
             }
         } else {
             return res.status(400).send({
-                "msg" : "anda belum melakukan pembayaran awd"
+                "msg" : "pembayaran anda belum disetujui"
                 });
         }
     } else {
@@ -125,124 +124,149 @@ const showJadwal = async (req, res) => {
             api_key: token,
         },
     });
+ 
+    const cekBayar = await db.Pembayaran.findOne({
+        where: {
+            status: "Paid",
+            bukti_pembayaran: cekToken.username
+        },
+    });
 
-    if (token != undefined) {
-        if (cekToken != null) {
-            if (validationResult.id_bioskop != undefined) {
-                let bioskop = await db.Bioskop.findOne({
-                    where: {
-                        id_bioskop: validationResult.id_bioskop,
-                    },
-                });
-        
-                if (bioskop != null) {
-                    let jadwal = await db.Jadwal.findAll({
-                        where: {
-                            id_film: validationResult.movie_id,
-                        },
-                    });
-        
-                    let tmpCabang;
-                    let result = [];
-                    if (jadwal.length > 0) {
-                        for (let i = 0; i < jadwal.length; i++) {
-                            let allStudio = await db.Studio.findAll({
+    if (cekBayar != null) {
+        let tmp = cekBayar.tanggal_pembayaran;
+        let bulan = tmp.substr(5, 2);
+        let tanggal = tmp.substr(8, 2);
+        let today = new Date();
+        var month = today.getMonth()+1;
+        var date = today.getDate();
+        if ((parseInt(month) == parseInt(bulan) && parseInt(date) > parseInt(tanggal)) || (parseInt(month) > parseInt(bulan) && parseInt(date) <= parseInt(tanggal)) || ((parseInt(month) == parseInt(bulan) && parseInt(date) == parseInt(tanggal)))) {
+            if (token != undefined) {
+                if (cekToken != null) {
+                    if (validationResult.id_bioskop != undefined) {
+                        let bioskop = await db.Bioskop.findOne({
+                            where: {
+                                id_bioskop: validationResult.id_bioskop,
+                            },
+                        });
+                
+                        if (bioskop != null) {
+                            let jadwal = await db.Jadwal.findAll({
                                 where: {
-                                    id_bioskop: validationResult.id_bioskop,
+                                    id_film: validationResult.movie_id,
                                 },
                             });
-        
-                            for (let j = 0; j < allStudio.length; j++) {
-                                if (jadwal[i].id_studio == allStudio[j].id_studio) {
-                                    let cabang = await db.Cabang.findAll({
+                
+                            let tmpCabang;
+                            let result = [];
+                            if (jadwal.length > 0) {
+                                for (let i = 0; i < jadwal.length; i++) {
+                                    let allStudio = await db.Studio.findAll({
                                         where: {
-                                            id_cabang: allStudio[j].id_cabang,
+                                            id_bioskop: validationResult.id_bioskop,
                                         },
                                     });
-        
-                                    for (let k = 0; k < cabang.length; k++) {
-                                        tmpCabang = {
-                                            nama : cabang[k].nama,
-                                            alamat : cabang[k].alamat
+                
+                                    for (let j = 0; j < allStudio.length; j++) {
+                                        if (jadwal[i].id_studio == allStudio[j].id_studio) {
+                                            let cabang = await db.Cabang.findAll({
+                                                where: {
+                                                    id_cabang: allStudio[j].id_cabang,
+                                                },
+                                            });
+                
+                                            for (let k = 0; k < cabang.length; k++) {
+                                                tmpCabang = {
+                                                    nama : cabang[k].nama,
+                                                    alamat : cabang[k].alamat
+                                                }
+                
+                                                result.push(tmpCabang);
+                                            }
                                         }
-        
-                                        result.push(tmpCabang);
                                     }
                                 }
+                
+                                if (result.length > 0) {
+                                    return res.status(200).send({
+                                        result,
+                                    });
+                                } else {
+                                    return res.status(404).send({
+                                        msg : "Film tidak tayang pada bioskop ini"
+                                    });
+                                }
+                            } else {
+                                return res.status(404).send({
+                                    msg : "Film tidak tayang pada bioskop ini"
+                                });
                             }
-                        }
-        
-                        if (result.length > 0) {
-                            return res.status(200).send({
-                                result,
-                            });
                         } else {
                             return res.status(404).send({
-                                msg : "Film tidak tayang pada bioskop ini"
+                                msg: "bioskop tidak terdaftar",
                             });
                         }
                     } else {
+                        let jadwal = await db.Jadwal.findAll({
+                            where: {
+                                id_film: validationResult.movie_id,
+                            },
+                        });
+                
+                        let tmp;
+                        let tmpBioskop;
+                        let resultCabang = [];
+                        let result = [];
+                
+                        for (let i = 0; i < jadwal.length; i++) {
+                            studio = await db.Studio.findAll({
+                                where: {
+                                    id_studio: jadwal[i].id_studio,
+                                },
+                            });
+                
+                            for (let j = 0; j < studio.length; j++) {
+                                let cabang = await db.Cabang.findAll({
+                                    where: {
+                                        id_cabang: studio[j].id_cabang,
+                                    },
+                                });
+                
+                                for (let k = 0; k < cabang.length; k++) {
+                                    tmp = {
+                                        nama : cabang[k].nama,
+                                        alamat : cabang[k].alamat
+                                    }
+                                    result.push(tmp);
+                                }
+                            }
+                        }
                         return res.status(404).send({
-                            msg : "Film tidak tayang pada bioskop ini"
+                            result,
                         });
                     }
                 } else {
-                    return res.status(404).send({
-                        msg: "bioskop tidak terdaftar",
-                    });
+                    return res.status(400).send({
+                        "msg" : "invalid api key"
+                        });
                 }
             } else {
-                let jadwal = await db.Jadwal.findAll({
-                    where: {
-                        id_film: validationResult.movie_id,
-                    },
-                });
-        
-                let tmp;
-                let tmpBioskop;
-                let resultCabang = [];
-                let result = [];
-        
-                for (let i = 0; i < jadwal.length; i++) {
-                    studio = await db.Studio.findAll({
-                        where: {
-                            id_studio: jadwal[i].id_studio,
-                        },
+                return res.status(400).send({
+                    "msg" : "api key required"
                     });
-        
-                    for (let j = 0; j < studio.length; j++) {
-                        let cabang = await db.Cabang.findAll({
-                            where: {
-                                id_cabang: studio[j].id_cabang,
-                            },
-                        });
-        
-                        for (let k = 0; k < cabang.length; k++) {
-                            tmp = {
-                                nama : cabang[k].nama,
-                                alamat : cabang[k].alamat
-                            }
-                            result.push(tmp);
-                        }
-                    }
-                }
-                return res.status(404).send({
-                    result,
-                });
             }
         } else {
             return res.status(400).send({
-                "msg" : "invalid api key"
+                "msg" : "anda belum melakukan pembayaran"
                 });
         }
     } else {
         return res.status(400).send({
-            "msg" : "api key required"
+            "msg" : "pembayaran anda belum disetujui"
             });
     }
 };
 
-const pembayaran = async (req,res) => {
+const pembayaran = async (req, res) => {
     let today = new Date();
     var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
     var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
@@ -319,8 +343,58 @@ const pembayaran = async (req,res) => {
     }
 };
 
+const nowShowing = async (req, res) => {
+    let token = req.header('x-api-key');
+
+    const cekToken = await db.WebReview.findOne({
+        where: {
+            api_key: token,
+        },
+    });
+ 
+    const cekBayar = await db.Pembayaran.findOne({
+        where: {
+            status: "Paid",
+            bukti_pembayaran: cekToken.username
+        },
+    });
+
+    if (cekBayar != null) {
+        let tmp = cekBayar.tanggal_pembayaran;
+        let bulan = tmp.substr(5, 2);
+        let tanggal = tmp.substr(8, 2);
+        let today = new Date();
+        var month = today.getMonth()+1;
+        var date = today.getDate();
+        if ((parseInt(month) == parseInt(bulan) && parseInt(date) > parseInt(tanggal)) || (parseInt(month) > parseInt(bulan) && parseInt(date) <= parseInt(tanggal)) || ((parseInt(month) == parseInt(bulan) && parseInt(date) == parseInt(tanggal)))) {
+            if (token != undefined) {
+                if (cekToken != null) {
+                    
+                } else {
+                    return res.status(400).send({
+                        "msg" : "invalid api key"
+                        });
+                }
+            } else {
+                return res.status(400).send({
+                    "msg" : "api key required"
+                    });
+            }
+        } else {
+            return res.status(400).send({
+                "msg" : "anda belum melakukan pembayaran"
+                });
+        }
+    } else {
+        return res.status(400).send({
+            "msg" : "pembayaran anda belum disetujui"
+            });
+    }
+};
+
 module.exports = {
     queryBioskop,
     showJadwal,
-    pembayaran
+    pembayaran,
+    nowShowing
   };

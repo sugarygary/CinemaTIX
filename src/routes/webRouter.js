@@ -18,12 +18,13 @@ const upload = multer({
 const {
   queryBioskop,
   showJadwal,
-  pembayaran
+  pembayaran,
+  nowShowing
 } = require("../controllers/webController");
 
 webRouter.get("/query-bioskop", queryBioskop);
 webRouter.get("/show-jadwal/:movie_id/:id_bioskop?", showJadwal);
-webRouter.get("/show-jadwal/:movie_id/:id_bioskop?", showJadwal);
 webRouter.post("/pembayaran", upload.single("bukti_pembayaran"), pembayaran);
+webRouter.get("/now-showing-films",nowShowing);
 
 module.exports = webRouter;
