@@ -5,10 +5,10 @@ const Joi = require("joi");
 
 const {
   registerBioskop,
-  // registerMarketplace,
+  registerMarketplace,
   registerWebReview,
   loginBioskop,
-  // loginMarketplace,
+  loginMarketplace,
   loginWebReview,
 } = require('../controllers/userController')
 
@@ -17,5 +17,7 @@ userRouter.post("/register-bioskop",registerBioskop );
 userRouter.post("/login-bioskop",loginBioskop );
 userRouter.post("/register-webreview",registerWebReview );
 userRouter.post("/login-webreview",loginWebReview );
+userRouter.post("/register-marketplace",registerMarketplace );
+userRouter.post("/login-marketplace",loginMarketplace );
 
 module.exports = userRouter;

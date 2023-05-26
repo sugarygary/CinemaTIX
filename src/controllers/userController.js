@@ -2,6 +2,7 @@ const { response } = require("express");
 const express = require("express");
 const db = require("../models");
 const { Op } = require("sequelize");
+const { ref } = require("joi");
 const Joi = require("joi").extend(require("@joi/date"));
 
 const checkUniqueBioskop_username = async (username) => {
@@ -259,11 +260,170 @@ const loginWebReview = async (req, res) => {
   }
 }
 
+//  Marketplace
+// Check Username di database
+const checkValidUsername = async (username) => {
+  const b = await db.Marketplace.findOne({
+    where: {
+      username: {
+        [Op.eq]: username
+      },
+    },
+  });
+  if (b) {
+    throw new Error("Username sudah terdaftar!!");
+  } else {
+    return username;
+  }
+};
+
+const checkUsernameLogin = async (username) => {
+  const b = await db.Marketplace.findOne({
+    where: {
+      username: {
+        [Op.eq]: username
+      },
+    },
+  });
+  if (b) {
+    return username;
+  } else {
+    throw new Error("(404) Username tidak ditemukan");
+  }
+};
+
+// Api function marketplace
+const registerMarketplace = async (req, res) => {
+  const validator = Joi.object({
+    username: Joi.string()
+      .external(checkValidUsername)
+      .required()
+      .label("Username")
+      .messages({
+        "any.required": "{{#label}} harus ada",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+    name: Joi.string()
+      .required()
+      .label("Name")
+      .messages({
+        "any.required": "{{#label}} harus ada",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+    password: Joi.string()
+      .required()
+      .label("Password")
+      .min(8)
+      .messages({
+        "any.required": "{#label} harus diisi",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+    confirm_password: Joi.string()
+      .required()
+      .label("Confirm Password")
+      .min(8)
+      .valid(Joi.ref('password'))
+      .messages({
+        "any.required": "{{#label}} harus diisi",
+        "string.empty": "{{#label}} tidak boleh blank",
+        "any.only": "{{#label}} harus sama dengan password"
+      })
+  });
+
+  try {
+    const validationResult = await validator.validateAsync(req.body, {
+      errors: {
+        label: false,
+        wrap: {
+          label: false,
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(400).send({ message: error.message });
+  }
+
+  const { username, name, password } = req.body;
+  const api_key = randomApiKey(10);
+
+  try {
+    const create_marketplace = await db.Marketplace.create({
+      username: username,
+      name: name,
+      password: password,
+      api_key: api_key
+    })
+
+    if (create_marketplace) {
+      return res.status(201).send({
+        message: `Akun Marketplace untuk ${name} telah dibuat`
+      })
+    }
+  } catch (error) {
+    return res.status(400).send({ message: error.message });
+  }
+}
+
+const loginMarketplace = async (req, res) => {
+  const validator = Joi.object({
+    username: Joi.string()
+      .external(checkUsernameLogin)
+      .required()
+      .label("Username")
+      .messages({
+        "any.required": "{{#label}} harus ada",
+        "string.empty": "{{#label}} tidak boleh blank",
+      }),
+    password: Joi.string()
+      .required()
+      .label("Password")
+      .min(8)
+      .messages({
+        "any.required": "{#label} harus diisi",
+        "string.empty": "{{#label}} tidak boleh blank",
+      })
+  });
+
+  try {
+    const validationResult = await validator.validateAsync(req.body, {
+      errors: {
+        label: false,
+        wrap: {
+          label: false,
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(400).send({ message: error.message });
+  }
+
+  const { username, password } = req.body;
+
+  const search_marketplace = await db.Marketplace.findOne({
+    where: {
+      username: {
+        [Op.eq]: username
+      }
+    }
+  });
+
+  if (search_marketplace.password === password) {
+    return res.status(200).send({
+      message: "Login berhasil!!",
+      api_key: search_marketplace.api_key
+    });
+  } else {
+    return res.status(400).send({
+      message: "Password salah"
+    });
+  }
+}
+
 module.exports = {
   registerBioskop,
-  // registerMarketplace,
+  registerMarketplace,
   registerWebReview,
   loginBioskop,
-  // loginMarketplace,
+  loginMarketplace,
   loginWebReview,
 };

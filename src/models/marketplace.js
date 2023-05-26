@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
   class Marketplace extends Model {
     static associate(models) {
       this.hasMany(models.History, {
-        foreignKey: "id_marketplace",
+        foreignKey: "username",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       });
@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Marketplace.init(
     {
-      id_marketplace: {
+      username: {
         type: DataTypes.STRING,
         allowNull: false,
         primaryKey: true,
