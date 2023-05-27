@@ -345,6 +345,8 @@ const pembayaran = async (req, res) => {
 
 const nowShowing = async (req, res) => {
     let token = req.header('x-api-key');
+    let nowShowing = [];
+    let temp;
 
     const cekToken = await db.WebReview.findOne({
         where: {
@@ -369,7 +371,47 @@ const nowShowing = async (req, res) => {
         if ((parseInt(month) == parseInt(bulan) && parseInt(date) > parseInt(tanggal)) || (parseInt(month) > parseInt(bulan) && parseInt(date) <= parseInt(tanggal)) || ((parseInt(month) == parseInt(bulan) && parseInt(date) == parseInt(tanggal)))) {
             if (token != undefined) {
                 if (cekToken != null) {
-                    
+                    let allFilm = await db.Jadwal.findAll();
+                    let jam = today.getHours();
+                    let menit = today.getMinutes();
+
+                    for (let i = 0; i < allFilm.length; i++) {
+                        let filmMulai = allFilm[i].jadwal_tayang;
+                        let bulan = filmMulai.substr(5,2);
+                        let tanggal = filmMulai.substr(8,2);
+                        let durasi = allFilm[i].durasi;
+                        let jamMulai = filmMulai.substr(11,2);
+                        let menitMulai = filmMulai.substr(14,2);
+                        let durasiJam = parseInt(durasi / 60);
+                        let durasiMenit = (durasi % 60)/1;
+                        let jamSelesai = parseInt(jamMulai) + parseInt(durasiJam);
+                        let menitSelesai = parseInt(menitMulai) + parseInt(durasiMenit);
+                        jamSelesai = parseInt(jamSelesai) + parseInt(menitSelesai/60)
+                        menitSelesai = menitSelesai % 60;
+
+                        if ((jam == jamSelesai && menit <= menitSelesai) || (jam >= jamMulai && jam < jamSelesai)) {
+                            if (month == bulan && date == tanggal) {
+                                let idCabang = allFilm[i].id_studio.substr(0,5);
+                                const cabang = await db.Cabang.findOne({
+                                    where: {
+                                        id_cabang: idCabang,
+                                    },
+                                });
+                                temp = {
+                                    bioskop : cabang.nama,
+                                    film : allFilm[i].judul_film,
+                                    sinopsis : allFilm[i].synopsis,
+                                    durasi : allFilm[i].durasi,
+                                }
+    
+                                nowShowing.push(temp);
+                            }
+                        }
+                    }
+                    return res.status(200).send({
+                        nowShowing
+                        });
+
                 } else {
                     return res.status(400).send({
                         "msg" : "invalid api key"
