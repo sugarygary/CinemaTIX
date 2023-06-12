@@ -1,8 +1,84 @@
-const { default: axios } = require("axios");
 const db = require("../models");
 const { Op } = require("sequelize");
 const Joi = require("joi").extend(require("@joi/date"));
-const IMDB_API_KEY = "a636df9869msh090dff929636d90p1f4196jsnc1d1abb1880c";
+
+const pesanTiket = async (req, res) => {
+    const {bukti_pembayaran, id_jadwal, nomor_kursi} = req.body
+    const token = req.header('x-api-key');
+    
+    const find_jadwal = await db.Jadwal.findOne({
+        where: {
+            id_jadwal: {
+                [Op.eq]: id_jadwal
+            }
+        }
+    })
+
+    if(find_jadwal){
+        const marketplace = await db.Marketplace.findOne({
+            where: {
+                api_key: {
+                    [Op.eq]: token
+                }
+            },
+            attributes: ["username"]
+        })
+
+        const check_available_kursi = await db.Tiket.findOne({
+            where: {
+                id_jadwal: {
+                    [Op.eq]: id_jadwal
+                },
+                nomor_kursi: {
+                    [Op.eq]: nomor_kursi
+                }
+            }
+        });
+
+        if(check_available_kursi && marketplace){
+            console.log(check_available_kursi)
+            if(check_available_kursi.status == 0){
+                const pembelian = await db.History.create({
+                    id_marketplace: marketplace.username,
+                    id_tiket: check_available_kursi.id_tiket,
+                    id_jadwal: id_jadwal
+                })
+
+                if(pembelian){
+                    const update_kursi = await db.Tiket.update(
+                        {
+                            status: 1
+                        },
+                        {
+                            where: {
+                                id_jadwal: {
+                                    [Op.eq]: id_jadwal
+                                },
+                                nomor_kursi: {
+                                    [Op.eq]: nomor_kursi
+                                }
+                            }
+                        }
+                    )
+
+                    const pesan_berhasil = "Pemesanan tiket dengan ID jadwal:" + id_jadwal + " dan nomor kursi:" + nomor_kursi + " telah berhasil"
+                    return res.status(201).send({
+                        message: pesan_berhasil,
+                        kode_tiket: check_available_kursi.id_tiket
+                    })
+                }
+
+                return res.status(400).send({message: "Pembelian gagal!!"});
+            }
+
+            return res.status(400).send({message: "Kursi sudah dibeli!!"})
+        }
+
+        return res.status(400).send({message: "Pembelian gagal!!"});
+    }
+
+    return res.status(404).send({message: "Jadwal tidak ditemukan!!"});
+}
 
 const queryBioskop = async (req, res) => {
     let token = req.header('x-api-key');
@@ -275,6 +351,7 @@ const showKursi = async (req, res) => {
 }
 
 module.exports = {
+    pesanTiket,
     queryBioskop,
     showCabang,
     showJadwal,
