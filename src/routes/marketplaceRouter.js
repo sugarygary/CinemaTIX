@@ -2,7 +2,6 @@ const express = require("express");
 const marketplaceRouter = express.Router();
 const multer = require("multer");
 const upload = multer({
-    dest: "./uploads",
     fileFilter: function (req, file, cb) {
       if (file.mimetype != "image/png" && file.mimetype != "image/jpeg") {
         return cb(new Error("Wrong file type"), null);
