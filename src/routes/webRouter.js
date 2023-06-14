@@ -20,11 +20,16 @@ const {
   showJadwal,
   pembayaran,
   nowShowing,
+  cekSubscription,
 } = require("../controllers/webController");
 
-webRouter.get("/query-bioskop", queryBioskop);
-webRouter.get("/show-jadwal/:movie_id/:id_bioskop?", showJadwal);
-webRouter.post("/pembayaran", pembayaran);
-webRouter.get("/now-showing-films", nowShowing);
+webRouter.get("/query-bioskop", cekSubscription, queryBioskop);
+webRouter.get(
+  "/show-jadwal/:movie_id/:id_bioskop?",
+  cekSubscription,
+  showJadwal
+);
+webRouter.post("/pembayaran", cekSubscription, pembayaran);
+webRouter.get("/now-showing-films", cekSubscription, nowShowing);
 
 module.exports = webRouter;

@@ -9,6 +9,6 @@ const {
 } = require("../controllers/adminController");
 
 //adminRouter.post("/acc-market-place", registerCabang);
-adminRouter.post("/acc-web-review/:bukti_pembayaran", accWebReview);
+adminRouter.post("/acc-web-review/:id_subscription", accWebReview);
 
 module.exports = adminRouter;
