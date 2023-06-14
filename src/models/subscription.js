@@ -1,46 +1,43 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class WebReview extends Model {
+  class Subscription extends Model {
     static associate(models) {
-      this.hasMany(models.Subscription, {
+      this.belongsTo(models.WebReview, {
         foreignKey: "id_web_review",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       });
     }
   }
-  WebReview.init(
+  Subscription.init(
     {
-      id_web_review: {
-        type: DataTypes.STRING,
+      id_subscription: {
         allowNull: false,
+        autoIncrement: true,
         primaryKey: true,
+        type: DataTypes.STRING,
       },
-      nama_web_review: {
+      bukti_pembayaran: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      password: {
-        type: DataTypes.STRING,
+      tanggal_pembayaran: {
+        type: DataTypes.DATE,
         allowNull: false,
       },
-      api_key: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      username: {
+      status: {
         type: DataTypes.STRING,
         allowNull: false,
       },
     },
     {
       sequelize,
-      modelName: "WebReview",
-      tableName: "webreview",
+      modelName: "Subscription",
+      tableName: "subscription",
       freezeTableName: true,
       timestamps: false,
     }
   );
-  return WebReview;
+  return Subscription;
 };

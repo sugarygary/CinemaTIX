@@ -11,20 +11,20 @@ const upload = multer({
     cb(null, true);
   },
   limits: {
-    fileSize: 100000000
-  }
+    fileSize: 100000000,
+  },
 });
 
 const {
   queryBioskop,
   showJadwal,
   pembayaran,
-  nowShowing
+  nowShowing,
 } = require("../controllers/webController");
 
 webRouter.get("/query-bioskop", queryBioskop);
 webRouter.get("/show-jadwal/:movie_id/:id_bioskop?", showJadwal);
-webRouter.post("/pembayaran", upload.single("bukti_pembayaran"), pembayaran);
-webRouter.get("/now-showing-films",nowShowing);
+webRouter.post("/pembayaran", pembayaran);
+webRouter.get("/now-showing-films", nowShowing);
 
 module.exports = webRouter;

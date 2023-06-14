@@ -10,14 +10,13 @@ const {
   loginBioskop,
   loginMarketplace,
   loginWebReview,
-} = require('../controllers/userController')
+} = require("../controllers/userController");
 
-
-userRouter.post("/register-bioskop",registerBioskop );
-userRouter.post("/login-bioskop",loginBioskop );
-userRouter.post("/register-webreview",registerWebReview );
-userRouter.post("/login-webreview",loginWebReview );
-userRouter.post("/register-marketplace",registerMarketplace );
-userRouter.post("/login-marketplace",loginMarketplace );
+userRouter.post("/register-bioskop", registerBioskop);
+userRouter.post("/login-bioskop", loginBioskop);
+userRouter.post("/register-webreview", registerWebReview);
+userRouter.post("/login-webreview", loginWebReview);
+userRouter.post("/register-marketplace", registerMarketplace);
+userRouter.post("/login-marketplace", loginMarketplace);
 
 module.exports = userRouter;

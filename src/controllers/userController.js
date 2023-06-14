@@ -1,8 +1,6 @@
-const { response } = require("express");
 const express = require("express");
 const db = require("../models");
 const { Op } = require("sequelize");
-const { ref } = require("joi");
 const Joi = require("joi").extend(require("@joi/date"));
 
 const checkUniqueBioskop_username = async (username) => {
@@ -12,7 +10,7 @@ const checkUniqueBioskop_username = async (username) => {
     },
   });
   if (u) {
-    throw new Error("Bioskop_username is not unique");
+    throw new Error("Username already taken.");
   } else {
     return username;
   }
@@ -159,7 +157,7 @@ const registerWebReview = async (req, res) => {
     username: Joi.string()
       .external(checkUniqueWebReview_username)
       .required()
-      .label("username Pengguna")
+      .label("Username")
       .messages({
         "any.required": "{{#label}} harus diisi",
         "string.empty": "{{#label}} tidak boleh blank",
@@ -169,7 +167,7 @@ const registerWebReview = async (req, res) => {
       .required()
       .alphanum()
       .min(5)
-      .label("Password Pengguna")
+      .label("Password")
       .messages({
         "any.required": "{{#label}} harus diisi",
         "string.min": "{{#label}} harus setidaknya 5 karakter",
@@ -179,11 +177,11 @@ const registerWebReview = async (req, res) => {
   try {
     const validationResult = await validator.validateAsync(req.body);
     let ctrID = (await db.WebReview.max("id_web_review")) || "WR000";
-    console.log(ctrID)
+    console.log(ctrID);
     let intID = parseInt(ctrID.substring(2)) + 1;
-    console.log(intID)
+    console.log(intID);
     let new_id = "WR" + intID.toString().padStart(3, "0");
-    console.log(new_id)
+    console.log(new_id);
     let api_key = randomApiKey(10);
     user = await db.WebReview.create({
       id_web_review: new_id,
@@ -201,7 +199,7 @@ const registerWebReview = async (req, res) => {
   } catch (error) {
     return res.status(400).send(error.message);
   }
-}
+};
 const checkLogin_WebReview_username = async (username) => {
   const u = await db.WebReview.findOne({
     where: {
@@ -258,7 +256,7 @@ const loginWebReview = async (req, res) => {
   } catch (error) {
     return res.status(400).send(error.message);
   }
-}
+};
 
 //  Marketplace
 // Check Username di database
@@ -266,7 +264,7 @@ const checkValidUsername = async (username) => {
   const b = await db.Marketplace.findOne({
     where: {
       username: {
-        [Op.eq]: username
+        [Op.eq]: username,
       },
     },
   });
@@ -281,7 +279,7 @@ const checkUsernameLogin = async (username) => {
   const b = await db.Marketplace.findOne({
     where: {
       username: {
-        [Op.eq]: username
+        [Op.eq]: username,
       },
     },
   });
@@ -303,31 +301,24 @@ const registerMarketplace = async (req, res) => {
         "any.required": "{{#label}} harus ada",
         "string.empty": "{{#label}} tidak boleh blank",
       }),
-    name: Joi.string()
-      .required()
-      .label("Name")
-      .messages({
-        "any.required": "{{#label}} harus ada",
-        "string.empty": "{{#label}} tidak boleh blank",
-      }),
-    password: Joi.string()
-      .required()
-      .label("Password")
-      .min(8)
-      .messages({
-        "any.required": "{#label} harus diisi",
-        "string.empty": "{{#label}} tidak boleh blank",
-      }),
+    name: Joi.string().required().label("Name").messages({
+      "any.required": "{{#label}} harus ada",
+      "string.empty": "{{#label}} tidak boleh blank",
+    }),
+    password: Joi.string().required().label("Password").min(8).messages({
+      "any.required": "{#label} harus diisi",
+      "string.empty": "{{#label}} tidak boleh blank",
+    }),
     confirm_password: Joi.string()
       .required()
       .label("Confirm Password")
       .min(8)
-      .valid(Joi.ref('password'))
+      .valid(Joi.ref("password"))
       .messages({
         "any.required": "{{#label}} harus diisi",
         "string.empty": "{{#label}} tidak boleh blank",
-        "any.only": "{{#label}} harus sama dengan password"
-      })
+        "any.only": "{{#label}} harus sama dengan password",
+      }),
   });
 
   try {
@@ -351,18 +342,18 @@ const registerMarketplace = async (req, res) => {
       username: username,
       name: name,
       password: password,
-      api_key: api_key
-    })
+      api_key: api_key,
+    });
 
     if (create_marketplace) {
       return res.status(201).send({
-        message: `Akun Marketplace untuk ${name} telah dibuat`
-      })
+        message: `Akun Marketplace untuk ${name} telah dibuat`,
+      });
     }
   } catch (error) {
     return res.status(400).send({ message: error.message });
   }
-}
+};
 
 const loginMarketplace = async (req, res) => {
   const validator = Joi.object({
@@ -374,14 +365,10 @@ const loginMarketplace = async (req, res) => {
         "any.required": "{{#label}} harus ada",
         "string.empty": "{{#label}} tidak boleh blank",
       }),
-    password: Joi.string()
-      .required()
-      .label("Password")
-      .min(8)
-      .messages({
-        "any.required": "{#label} harus diisi",
-        "string.empty": "{{#label}} tidak boleh blank",
-      })
+    password: Joi.string().required().label("Password").min(8).messages({
+      "any.required": "{#label} harus diisi",
+      "string.empty": "{{#label}} tidak boleh blank",
+    }),
   });
 
   try {
@@ -402,22 +389,22 @@ const loginMarketplace = async (req, res) => {
   const search_marketplace = await db.Marketplace.findOne({
     where: {
       username: {
-        [Op.eq]: username
-      }
-    }
+        [Op.eq]: username,
+      },
+    },
   });
 
   if (search_marketplace.password === password) {
     return res.status(200).send({
       message: "Login berhasil!!",
-      api_key: search_marketplace.api_key
+      api_key: search_marketplace.api_key,
     });
   } else {
     return res.status(400).send({
-      message: "Password salah"
+      message: "Password salah",
     });
   }
-}
+};
 
 module.exports = {
   registerBioskop,
