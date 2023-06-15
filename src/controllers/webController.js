@@ -68,75 +68,61 @@ const showJadwal = async (req, res) => {
     movie_id: Joi.string().required(),
     id_bioskop: Joi.string(),
   });
-  let token = req.header("x-api-key");
   const validationResult = await validator.validateAsync(req.params);
-
-  const cekToken = await db.WebReview.findOne({
-    where: {
-      api_key: token,
-    },
-  });
-
-  const cekBayar = await db.Subscription.findOne({
-    where: {
-      status: "Paid",
-      bukti_pembayaran: cekToken.username,
-    },
-  });
-
-  if (validationResult.id_bioskop) {
+  let today = new Date();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let time =
+    today.getHours().toString().padStart(2, "0") +
+    ":" +
+    today.getMinutes().toString().padStart(2, "0") +
+    ":" +
+    today.getSeconds().toString().padStart(2, "0");
+  let dateTime = date + " " + time;
+  if (req.params.id_bioskop) {
     let bioskop = await db.Bioskop.findOne({
       where: {
-        id_bioskop: validationResult.id_bioskop,
+        id_bioskop: req.params.id_bioskop,
       },
     });
-
-    if (bioskop != null) {
-      let jadwal = await db.Jadwal.findAll({
+    if (bioskop) {
+      let jadwal = [];
+      let tempjadwal = await db.Jadwal.findAll({
         where: {
-          id_film: validationResult.movie_id,
+          id_film: req.params.movie_id,
+          jadwal_tayang: { [Op.gte]: dateTime },
         },
       });
-
-      let tmpCabang;
+      for (let i = 0; i < tempjadwal.length; i++) {
+        const element = tempjadwal[i];
+        let getCabang = await (await element.getStudio()).getCabang();
+        if (getCabang.id_bioskop == req.params.id_bioskop) {
+          jadwal.push(element);
+        }
+      }
       let result = [];
       if (jadwal.length > 0) {
         for (let i = 0; i < jadwal.length; i++) {
-          let allStudio = await db.Studio.findAll({
-            where: {
-              id_bioskop: validationResult.id_bioskop,
-            },
+          const element = jadwal[i];
+          const studio = await element.getStudio();
+          const cabang = await studio.getCabang();
+          const kursi_tersedia = await db.Tiket.count({
+            where: { status: 0, id_jadwal: element.id_jadwal },
           });
-
-          for (let j = 0; j < allStudio.length; j++) {
-            if (jadwal[i].id_studio == allStudio[j].id_studio) {
-              let cabang = await db.Cabang.findAll({
-                where: {
-                  id_cabang: allStudio[j].id_cabang,
-                },
-              });
-
-              for (let k = 0; k < cabang.length; k++) {
-                tmpCabang = {
-                  nama: cabang[k].nama,
-                  alamat: cabang[k].alamat,
-                };
-
-                result.push(tmpCabang);
-              }
-            }
-          }
-        }
-
-        if (result.length > 0) {
-          return res.status(200).send({
-            result,
-          });
-        } else {
-          return res.status(404).send({
-            message: "Film tidak tayang pada bioskop ini",
+          result.push({
+            lokasi: cabang.nama,
+            alamat: cabang.alamat,
+            studio: parseInt(studio.nomor_studio),
+            jam_tayang: element.jadwal_tayang,
+            harga: element.harga,
+            kursi_tersedia,
           });
         }
+        return res.status(200).send(result);
       } else {
         return res.status(404).send({
           message: "Film tidak tayang pada bioskop ini",
@@ -150,41 +136,33 @@ const showJadwal = async (req, res) => {
   } else {
     let jadwal = await db.Jadwal.findAll({
       where: {
-        id_film: validationResult.movie_id,
+        id_film: req.params.movie_id,
+        jadwal_tayang: { [Op.gte]: dateTime },
       },
     });
-
-    let tmp;
-    let tmpBioskop;
-    let resultCabang = [];
-    let result = [];
-
-    for (let i = 0; i < jadwal.length; i++) {
-      studio = await db.Studio.findAll({
-        where: {
-          id_studio: jadwal[i].id_studio,
-        },
+    if (jadwal.length == 0) {
+      return res.status(404).send({
+        message: "Film tidak tayang di bioskop manapun",
       });
-
-      for (let j = 0; j < studio.length; j++) {
-        let cabang = await db.Cabang.findAll({
-          where: {
-            id_cabang: studio[j].id_cabang,
-          },
-        });
-
-        for (let k = 0; k < cabang.length; k++) {
-          tmp = {
-            nama: cabang[k].nama,
-            alamat: cabang[k].alamat,
-          };
-          result.push(tmp);
-        }
-      }
     }
-    return res.status(404).send({
-      result,
-    });
+    let result = [];
+    for (let i = 0; i < jadwal.length; i++) {
+      const element = jadwal[i];
+      const studio = await element.getStudio();
+      const cabang = await studio.getCabang();
+      const kursi_tersedia = await db.Tiket.count({
+        where: { status: 0, id_jadwal: element.id_jadwal },
+      });
+      result.push({
+        lokasi: cabang.nama,
+        alamat: cabang.alamat,
+        studio: parseInt(studio.nomor_studio),
+        jam_tayang: element.jadwal_tayang,
+        harga: element.harga,
+        kursi_tersedia,
+      });
+    }
+    return res.status(200).send(result);
   }
 };
 
@@ -297,100 +275,48 @@ const nowShowing = async (req, res) => {
   let token = req.header("x-api-key");
   let nowShowing = [];
   let temp;
+  let allFilm = await db.Jadwal.findAll();
+  let today = new Date();
+  let jam = today.getHours();
+  let menit = today.getMinutes();
 
-  const cekToken = await db.WebReview.findOne({
-    where: {
-      api_key: token,
-    },
-  });
+  for (let i = 0; i < allFilm.length; i++) {
+    let filmMulai = allFilm[i].jadwal_tayang;
+    let bulan = filmMulai.substr(5, 2);
+    let tanggal = filmMulai.substr(8, 2);
+    let durasi = allFilm[i].durasi;
+    let jamMulai = filmMulai.substr(11, 2);
+    let menitMulai = filmMulai.substr(14, 2);
+    let durasiJam = parseInt(durasi / 60);
+    let durasiMenit = (durasi % 60) / 1;
+    let jamSelesai = parseInt(jamMulai) + parseInt(durasiJam);
+    let menitSelesai = parseInt(menitMulai) + parseInt(durasiMenit);
+    jamSelesai = parseInt(jamSelesai) + parseInt(menitSelesai / 60);
+    menitSelesai = menitSelesai % 60;
 
-  const cekBayar = await db.Subscription.findOne({
-    where: {
-      status: "Paid",
-      bukti_pembayaran: cekToken.username,
-    },
-  });
-
-  if (cekBayar != null) {
-    let tmp = cekBayar.tanggal_pembayaran;
-    let bulan = tmp.substr(5, 2);
-    let tanggal = tmp.substr(8, 2);
-    let today = new Date();
-    let month = today.getMonth() + 1;
-    let date = today.getDate();
     if (
-      (parseInt(month) == parseInt(bulan) &&
-        parseInt(date) > parseInt(tanggal)) ||
-      (parseInt(month) > parseInt(bulan) &&
-        parseInt(date) <= parseInt(tanggal)) ||
-      (parseInt(month) == parseInt(bulan) &&
-        parseInt(date) == parseInt(tanggal))
+      (jam == jamSelesai && menit <= menitSelesai) ||
+      (jam >= jamMulai && jam < jamSelesai)
     ) {
-      if (token != undefined) {
-        if (cekToken != null) {
-          let allFilm = await db.Jadwal.findAll();
-          let jam = today.getHours();
-          let menit = today.getMinutes();
-
-          for (let i = 0; i < allFilm.length; i++) {
-            let filmMulai = allFilm[i].jadwal_tayang;
-            let bulan = filmMulai.substr(5, 2);
-            let tanggal = filmMulai.substr(8, 2);
-            let durasi = allFilm[i].durasi;
-            let jamMulai = filmMulai.substr(11, 2);
-            let menitMulai = filmMulai.substr(14, 2);
-            let durasiJam = parseInt(durasi / 60);
-            let durasiMenit = (durasi % 60) / 1;
-            let jamSelesai = parseInt(jamMulai) + parseInt(durasiJam);
-            let menitSelesai = parseInt(menitMulai) + parseInt(durasiMenit);
-            jamSelesai = parseInt(jamSelesai) + parseInt(menitSelesai / 60);
-            menitSelesai = menitSelesai % 60;
-
-            if (
-              (jam == jamSelesai && menit <= menitSelesai) ||
-              (jam >= jamMulai && jam < jamSelesai)
-            ) {
-              if (month == bulan && date == tanggal) {
-                let idCabang = allFilm[i].id_studio.substr(0, 5);
-                const cabang = await db.Cabang.findOne({
-                  where: {
-                    id_cabang: idCabang,
-                  },
-                });
-                temp = {
-                  bioskop: cabang.nama,
-                  film: allFilm[i].judul_film,
-                  sinopsis: allFilm[i].synopsis,
-                  durasi: allFilm[i].durasi,
-                };
-
-                nowShowing.push(temp);
-              }
-            }
-          }
-          return res.status(200).send({
-            nowShowing,
-          });
-        } else {
-          return res.status(401).send({
-            message: "invalid api key",
-          });
-        }
-      } else {
-        return res.status(401).send({
-          message: "api key required",
+      if (month == bulan && date == tanggal) {
+        let idCabang = allFilm[i].id_studio.substr(0, 5);
+        const cabang = await db.Cabang.findOne({
+          where: {
+            id_cabang: idCabang,
+          },
         });
+        temp = {
+          bioskop: cabang.nama,
+          film: allFilm[i].judul_film,
+          sinopsis: allFilm[i].synopsis,
+          durasi: allFilm[i].durasi,
+        };
+
+        nowShowing.push(temp);
       }
-    } else {
-      return res.status(403).send({
-        message: "Masa subscription anda telah berakhir.",
-      });
     }
-  } else {
-    return res.status(403).send({
-      message: "pembayaran anda belum disetujui",
-    });
   }
+  return res.status(200).send(nowShowing);
 };
 
 module.exports = {

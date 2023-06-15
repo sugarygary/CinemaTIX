@@ -46,7 +46,7 @@ const checkValidId_Cabang = async (id_cabang) => {
 const validateBioskopAPIKey = async function (req, res, next) {
   let api_key = req.header("x-api-key");
   if (!api_key) {
-    return res.status(401).send({ message: "Unauthorized" });
+    return res.status(401).send({ message: "Missing API Key" });
   }
   const u = await db.Bioskop.findOne({
     where: {
