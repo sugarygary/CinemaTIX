@@ -7,7 +7,7 @@ const multer = require("multer");
 async function cekSubscription(req, res, next) {
   let token = req.header("x-api-key");
   if (!token) {
-    return res.status(401).send({ message: "Missing API Key" });
+    return res.status(401).send({ message: "API Key harus diisi" });
   }
   const requester = await db.WebReview.findOne({
     where: {
@@ -15,7 +15,7 @@ async function cekSubscription(req, res, next) {
     },
   });
   if (!requester) {
-    return res.status(401).send({ message: "Invalid API Key" });
+    return res.status(401).send({ message: "API Key Invalid" });
   }
   let lastMonth = new Date();
   lastMonth.setDate(lastMonth.getDate() - 30);
@@ -41,12 +41,12 @@ async function cekSubscription(req, res, next) {
   if (!alreadySubscribed) {
     return res
       .status(403)
-      .send({ message: "You are not subscribed to CinemaTIX API" });
+      .send({ message: "Anda belum berlangganan dengan CinemaTIX API" });
   }
   if (alreadySubscribed.status != "Paid") {
     return res
       .status(403)
-      .send({ message: "Pembayaran langganan masih dalam proses" });
+      .send({ message: "Pembayaran langganan anda sedang diproses" });
   }
   next();
 }
@@ -60,6 +60,9 @@ const queryBioskop = async (req, res) => {
     option.where = { nama: { [Op.substring]: query } };
   }
   let queryResult = await db.Bioskop.findAll(option);
+  if (queryResult.length == 0) {
+    return res.status(404).send({ message: "Bioskop tidak ditemukan" });
+  }
   return res.status(200).send(queryResult);
 };
 
@@ -68,7 +71,10 @@ const showJadwal = async (req, res) => {
     movie_id: Joi.string().required(),
     id_bioskop: Joi.string(),
   });
-  const validationResult = await validator.validateAsync(req.params);
+  const { error, value } = await validator.validateAsync(req.params);
+  if (error) {
+    return res.status(400).send({ message: "Movie ID harus diisi" });
+  }
   let today = new Date();
   let date =
     today.getFullYear() +
@@ -319,10 +325,102 @@ const nowShowing = async (req, res) => {
   return res.status(200).send(nowShowing);
 };
 
+const nowShowing_2 = async (req, res) => {
+  let today = new Date();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let film = await db.Jadwal.findAll({
+    attributes: ["id_film", "judul_film", "durasi", "synopsis", "age_rating"],
+    where: {
+      jadwal_tayang: {
+        [Op.like]: date + "%",
+      },
+    },
+  });
+  let distinct = [];
+  film.map((x) =>
+    distinct.filter(
+      (a) =>
+        a.id_film == x.id_film &&
+        a.judul_film == x.judul_film &&
+        a.durasi == x.durasi &&
+        a.synopsis == x.synopsis &&
+        a.age_rating == x.age_rating
+    ).length > 0
+      ? null
+      : distinct.push(x)
+  );
+  if (distinct.length == 0) {
+    return res
+      .status(404)
+      .send({ message: "Tidak ada film yang tayang hari ini" });
+  }
+  return res.status(200).send(distinct);
+};
+
+const comingSoon = async function (req, res) {
+  let coming_soon = [];
+  let today = new Date();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let film = await db.Jadwal.findAll({
+    attributes: ["id_film", "judul_film", "durasi", "synopsis", "age_rating"],
+    where: {
+      jadwal_tayang: {
+        [Op.like]: date + "%",
+      },
+    },
+  });
+  let filmSoon = await db.Jadwal.findAll({
+    attributes: ["id_film", "judul_film", "durasi", "synopsis", "age_rating"],
+    where: {
+      jadwal_tayang: {
+        [Op.gt]: date,
+      },
+    },
+  });
+  for (let i = 0; i < filmSoon.length; i++) {
+    const element = filmSoon[i];
+    if (film.filter((x) => x.id_film == element.id_film).length > 0) {
+      continue;
+    }
+    coming_soon.push(element);
+  }
+  let distinct = [];
+  coming_soon.map((x) =>
+    distinct.filter(
+      (a) =>
+        a.id_film == x.id_film &&
+        a.judul_film == x.judul_film &&
+        a.durasi == x.durasi &&
+        a.synopsis == x.synopsis &&
+        a.age_rating == x.age_rating
+    ).length > 0
+      ? null
+      : distinct.push(x)
+  );
+  if (distinct.length == 0) {
+    return res
+      .status(404)
+      .send({ message: "Tidak ada film yang akan segera tayang" });
+  }
+  return res.status(200).send(distinct);
+};
+
 module.exports = {
   queryBioskop,
   showJadwal,
   pembayaran,
   nowShowing,
+  nowShowing_2,
   cekSubscription,
+  comingSoon,
 };

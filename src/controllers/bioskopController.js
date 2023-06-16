@@ -46,7 +46,7 @@ const checkValidId_Cabang = async (id_cabang) => {
 const validateBioskopAPIKey = async function (req, res, next) {
   let api_key = req.header("x-api-key");
   if (!api_key) {
-    return res.status(401).send({ message: "Missing API Key" });
+    return res.status(401).send({ message: "API Key harus diisi" });
   }
   const u = await db.Bioskop.findOne({
     where: {
@@ -54,7 +54,7 @@ const validateBioskopAPIKey = async function (req, res, next) {
     },
   });
   if (!u) {
-    return res.status(401).send("Invalid API Key");
+    return res.status(401).send("API Key invalid");
   }
   req.user = u;
   next();
@@ -260,6 +260,11 @@ const registerJadwal = async (req, res) => {
     }
   } catch (error) {
     return res.status(500).send({ message: error.message });
+  }
+  if (movie_details.data.title.titleType != "movie") {
+    return res
+      .status(400)
+      .send({ message: "Judul yang diinputkan bukan merupakan film" });
   }
   let judul_film = movie_details.data.title.title;
   let durasi = movie_details.data.title.runningTimeInMinutes;

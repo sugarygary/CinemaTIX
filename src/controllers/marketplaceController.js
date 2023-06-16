@@ -269,12 +269,11 @@ const showJadwal = async (req, res) => {
           id_studio: search_jadwal[k].id_studio,
           judul_film: search_jadwal[k].judul_film,
           jadwal_tayang: search_jadwal[k].jadwal_tayang,
-          "durasi(menit)": search_jadwal[k].durasi,
+          "durasi (menit)": search_jadwal[k].durasi,
           age_rating: search_jadwal[k].age_rating,
           harga: search_jadwal[k].harga,
           synopsis: search_jadwal[k].synopsis,
         };
-
         list_jadwal.push(data);
       }
     }
