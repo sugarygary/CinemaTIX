@@ -31,7 +31,7 @@ webRouter.get(
   cekSubscription,
   showJadwal
 );
-webRouter.post("/pembayaran", cekSubscription, pembayaran);
+webRouter.post("/pembayaran", pembayaran);
 webRouter.get("/now-showing", cekSubscription, nowShowing_2);
 webRouter.get("/coming-soon", cekSubscription, comingSoon);
 

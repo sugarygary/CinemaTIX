@@ -63,7 +63,17 @@ const queryBioskop = async (req, res) => {
   if (queryResult.length == 0) {
     return res.status(404).send({ message: "Bioskop tidak ditemukan" });
   }
-  return res.status(200).send(queryResult);
+  let finalResult = [];
+  for (let i = 0; i < queryResult.length; i++) {
+    const element = queryResult[i];
+    let cabang = await element.getCabangs({ attributes: ["nama", "alamat"] });
+    finalResult.push({
+      id_bioskop: element.id_bioskop,
+      nama: element.nama,
+      cabang,
+    });
+  }
+  return res.status(200).send(finalResult);
 };
 
 const showJadwal = async (req, res) => {
@@ -178,7 +188,7 @@ const pembayaran = async (req, res) => {
   let newID = "SCB" + intID.toString().padStart(3, "0");
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, "uploads/");
+      cb(null, "uploads/subscription/");
     },
     filename: function (req, file, cb) {
       cb(null, newID + ".jpg");
@@ -202,7 +212,7 @@ const pembayaran = async (req, res) => {
       return res.status(400).send({ message: err });
     }
     if (!req.file) {
-      fs.unlinkSync("uploads/" + newID + ".jpg");
+      fs.unlinkSync("uploads/subscription/" + newID + ".jpg");
       return res
         .status(400)
         .send({ message: "Masukkan bukti pembayaran berupa foto" });
@@ -229,7 +239,7 @@ const pembayaran = async (req, res) => {
       },
     });
     if (!webreview) {
-      fs.unlinkSync("uploads/" + newID + ".jpg");
+      fs.unlinkSync("uploads/subscription/" + newID + ".jpg");
       return res.status(401).send({ message: "Invalid API Key" });
     }
     let lastMonth = new Date();
@@ -254,7 +264,7 @@ const pembayaran = async (req, res) => {
       },
     });
     if (alreadySubscribed) {
-      fs.unlinkSync("uploads/" + newID + ".jpg");
+      fs.unlinkSync("uploads/subscription/" + newID + ".jpg");
       if (alreadySubscribed.status == "Pending") {
         return res
           .status(403)

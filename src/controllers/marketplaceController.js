@@ -100,47 +100,27 @@ const queryBioskop = async (req, res) => {
     if (!search_user_api) {
       return res.status(400).send({ message: "Incorrect api key" });
     }
-
-    let temp = [];
-    if (nama_bioskop && nama_bioskop.length > 1) {
-      const search_bioskop = await db.Bioskop.findOne({
-        where: {
-          nama: {
-            [Op.like]: "%" + nama_bioskop + "%",
-          },
-        },
-      });
-
-      if (search_bioskop === null || search_bioskop.length === 0) {
-        return res.status(404).send({ message: "Bioskop tidak terdaftar!!" });
-      }
-
-      let count_cabang = await db.Cabang.findAll({
-        where: {
-          id_bioskop: {
-            [Op.eq]: search_bioskop.id_bioskop,
-          },
-        },
-      });
-
-      count_cabang = count_cabang.length;
-
-      temp = {
-        id: search_bioskop.id_bioskop,
-        username: search_bioskop.username,
-        nama: search_bioskop.nama,
-        jumlah_cabang: count_cabang,
-      };
-    } else {
-      const list_bioskop = await db.Bioskop.findAll();
-      for (let i = 0; i < list_bioskop.length; i++) {
-        temp.push(list_bioskop[i].nama);
-      }
+    let option = {
+      attributes: ["id_bioskop", "nama"],
+    };
+    if (nama_bioskop) {
+      option.where = { nama: { [Op.substring]: nama_bioskop } };
     }
-
-    return res.status(200).send({
-      data: temp,
-    });
+    let queryResult = await db.Bioskop.findAll(option);
+    if (queryResult.length == 0) {
+      return res.status(404).send({ message: "Bioskop tidak ditemukan" });
+    }
+    let finalResult = [];
+    for (let i = 0; i < queryResult.length; i++) {
+      const element = queryResult[i];
+      let cabang = await element.getCabangs({ attributes: ["nama", "alamat"] });
+      finalResult.push({
+        id_bioskop: element.id_bioskop,
+        nama: element.nama,
+        cabang,
+      });
+    }
+    return res.status(200).send(finalResult);
   }
 
   return res.status(404).send({
