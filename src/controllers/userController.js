@@ -1,8 +1,8 @@
 const express = require("express");
 const db = require("../models");
+
 const { Op } = require("sequelize");
 const Joi = require("joi").extend(require("@joi/date"));
-
 const checkUniqueBioskop_username = async (username) => {
   const u = await db.Bioskop.findOne({
     where: {

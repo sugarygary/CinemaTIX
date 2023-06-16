@@ -130,7 +130,8 @@ const queryBioskop = async (req, res) => {
 
 const showCabang = async (req, res) => {
   let token = req.header("x-api-key");
-  let { nama_bioskop } = req.query;
+  let result = [];
+  let { id_bioskop } = req.params;
 
   if (token != undefined) {
     const search_user_api = await db.Marketplace.findOne({
@@ -142,76 +143,40 @@ const showCabang = async (req, res) => {
     });
 
     if (!search_user_api) {
-      return res.status(400).send({ message: "Incorrect api key" });
+      return res.status(401).send({ message: "API Key Invalid" });
     }
-
-    let search_bioskop;
-    if (nama_bioskop && nama_bioskop.length > 1) {
-      search_bioskop = await db.Bioskop.findAll({
-        where: {
-          nama: {
-            [Op.like]: "%" + nama_bioskop + "%",
-          },
-        },
+    const cabang = await db.Cabang.findAll({ where: { id_bioskop } });
+    if (cabang.length == 0) {
+      return res.status(404).send({ message: "Bioskop belum memiliki cabang" });
+    }
+    for (let i = 0; i < cabang.length; i++) {
+      const element = cabang[i];
+      const studio = await element.getStudios({
+        attributes: ["nomor_studio", "jenis_studio", "baris", "kolom"],
       });
-    } else {
-      search_bioskop = await db.Bioskop.findAll();
-    }
-
-    if (search_bioskop === null || search_bioskop.length === 0) {
-      return res.status(404).send({
-        message: "Bioskop tidak terdaftar!!",
+      result.push({
+        id_cabang: element.id_cabang,
+        nama_cabang: element.nama,
+        alamat_cabang: element.alamat,
+        studio,
       });
     }
-
-    const temp = [];
-    for (let i = 0; i < search_bioskop.length; i++) {
-      const search_cabang = await db.Cabang.findAll({
-        where: {
-          id_bioskop: {
-            [Op.eq]: search_bioskop[i].id_bioskop,
-          },
-        },
-      });
-
-      for (let j = 0; j < search_cabang.length; j++) {
-        const data = {
-          id_cabang: search_cabang[j].id_cabang,
-          nama: search_cabang[j].nama,
-        };
-
-        temp.push(data);
-      }
-    }
-
-    if (temp.length === 0) {
-      return res.status(400).send({
-        message: "Belum ada data bioskop",
-      });
-    }
-
-    return res.status(200).send({
-      data: temp,
-    });
+    return res.status(200).send(result);
   }
 
-  return res.status(404).send({
-    message: "Missing api key",
+  return res.status(401).send({
+    message: "API Key harus diisi",
   });
 };
 
 const showJadwal = async (req, res) => {
   let { id_cabang, id_movie } = req.query;
 
-  if (id_cabang == undefined && id_movie == undefined) {
-    return res.status(400).send({ message: "Input id cabang atau movie" });
+  if (!id_cabang) {
+    return res.status(400).send({ message: "Input ID cabang" });
   }
 
-  if (
-    id_cabang != undefined &&
-    id_cabang.length > 0 &&
-    (id_movie == undefined || id_movie.length === 0)
-  ) {
+  if (!id_movie) {
     const search_cabang = await db.Cabang.findOne({
       where: {
         id_cabang: {
@@ -221,7 +186,7 @@ const showJadwal = async (req, res) => {
     });
 
     if (!search_cabang) {
-      return res.status(404).send({ message: "Jadwal tidak ditemukan" });
+      return res.status(404).send({ message: "Cabang tidak ditemukan" });
     }
 
     const search_studio = await db.Studio.findAll({
@@ -316,7 +281,7 @@ const showKursi = async (req, res) => {
 
   if (!search_jadwal) {
     return res.status(404).send({
-      message: "Jadwal tidak ditemukan!!",
+      message: "Jadwal tidak ditemukan",
     });
   }
 
@@ -325,6 +290,7 @@ const showKursi = async (req, res) => {
       id_jadwal: {
         [Op.eq]: id_jadwal,
       },
+      status: 0,
     },
     attributes: ["nomor_kursi"],
   });
@@ -333,9 +299,9 @@ const showKursi = async (req, res) => {
   for (let i = 0; i < list_kursi.length; i++) {
     data.push(list_kursi[i].nomor_kursi);
   }
-
   return res.status(200).send({
-    data: data,
+    harga: search_jadwal.harga + 5000,
+    kursi_tersedia: data,
   });
 };
 
