@@ -197,7 +197,7 @@ const pembayaran = async (req, res) => {
   const upload = multer({
     fileFilter: function (req, file, cb) {
       if (file.mimetype != "image/jpg" && file.mimetype != "image/jpeg") {
-        return cb(new Error("Wrong file type"), null);
+        return cb(new Error("Format file salah"), null);
       }
       cb(null, true);
     },
@@ -212,7 +212,6 @@ const pembayaran = async (req, res) => {
       return res.status(400).send({ message: err });
     }
     if (!req.file) {
-      fs.unlinkSync("uploads/subscription/" + newID + ".jpg");
       return res
         .status(400)
         .send({ message: "Masukkan bukti pembayaran berupa foto" });

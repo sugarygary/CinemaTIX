@@ -1,7 +1,8 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+const fs = require("fs");
 const Joi = require("joi").extend(require("@joi/date"));
-
+const multer = require("multer");
 const pesanTiket = async (req, res) => {
   let token = req.header("x-api-key");
   if (token == undefined || token == "") {
@@ -18,40 +19,81 @@ const pesanTiket = async (req, res) => {
   if (!marketplace) {
     return res.status(401).send({ message: "API Key invalid" });
   }
-  const { bukti_pembayaran, id_jadwal, nomor_kursi } = req.body;
-  const find_jadwal = await db.Jadwal.findOne({
-    where: {
-      id_jadwal: {
-        [Op.eq]: id_jadwal,
-      },
+  const historyID = (await db.History.max("id_history")) || "H000000";
+  let intID = parseInt(historyID.toString().substring(1)) + 1;
+  let newID = "H" + intID.toString().padStart(6, "0");
+  const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "uploads/tiket/");
+    },
+    filename: function (req, file, cb) {
+      cb(null, newID + ".jpg");
     },
   });
-  if (find_jadwal) {
-    const check_available_kursi = await db.Tiket.findOne({
+  const upload = multer({
+    fileFilter: function (req, file, cb) {
+      if (file.mimetype != "image/jpg" && file.mimetype != "image/jpeg") {
+        return cb(new Error("Format file salah"), null);
+      }
+      cb(null, true);
+    },
+    storage: storage,
+    limits: {
+      fileSize: 100000000,
+    },
+  });
+  const uploadFile = upload.single("bukti_pembayaran");
+  uploadFile(req, res, async function (err) {
+    if (err) {
+      return res.status(400).send({ message: err });
+    }
+    if (!req.file) {
+      return res
+        .status(400)
+        .send({ message: "Masukkan bukti pembayaran berupa foto" });
+    }
+    const { id_jadwal, nomor_kursi } = req.body;
+    if (
+      id_jadwal == undefined ||
+      id_jadwal == "" ||
+      nomor_kursi == "" ||
+      nomor_kursi == undefined
+    ) {
+      fs.unlinkSync("uploads/tiket/" + newID + ".jpg");
+      return res
+        .status(400)
+        .send({ message: "ID Jadwal dan nomor kursi harus diisi" });
+    }
+    const find_jadwal = await db.Jadwal.findOne({
       where: {
         id_jadwal: {
           [Op.eq]: id_jadwal,
         },
-        nomor_kursi: {
-          [Op.eq]: nomor_kursi,
-        },
       },
     });
+    if (find_jadwal) {
+      const check_available_kursi = await db.Tiket.findOne({
+        where: {
+          id_jadwal: {
+            [Op.eq]: id_jadwal,
+          },
+          nomor_kursi: {
+            [Op.eq]: nomor_kursi,
+          },
+        },
+      });
 
-    if (check_available_kursi) {
-      console.log(check_available_kursi);
-      if (check_available_kursi.status == 0) {
-        const pembelian = await db.History.create({
-          id_marketplace: marketplace.username,
-          id_tiket: check_available_kursi.id_tiket,
-          id_jadwal: id_jadwal,
-        });
-
-        if (pembelian) {
-          const update_kursi = await db.Tiket.update(
-            {
-              status: 1,
-            },
+      if (check_available_kursi) {
+        if (check_available_kursi.status == 0) {
+          const pembelian = await db.History.create({
+            id_history: newID,
+            id_marketplace: marketplace.username,
+            id_tiket: check_available_kursi.id_tiket,
+            id_jadwal: id_jadwal,
+            nominal: find_jadwal.harga + 5000,
+          });
+          await db.Tiket.update(
+            { status: 1 },
             {
               where: {
                 id_jadwal: {
@@ -65,23 +107,27 @@ const pesanTiket = async (req, res) => {
           );
 
           const pesan_berhasil =
-            "Pemesanan tiket dengan ID jadwal:" +
+            "Pemesanan tiket dengan ID jadwal: " +
             id_jadwal +
-            " dan nomor kursi:" +
+            " untuk film " +
+            find_jadwal.judul_film;
+          +" dengan nomor kursi: " +
             nomor_kursi +
-            " telah berhasil";
+            " sedang diproses. Mohon akses endpoint 'get tiket' untuk informasi proses tiket";
           return res.status(201).send({
             message: pesan_berhasil,
             kode_tiket: check_available_kursi.id_tiket,
           });
         }
-        return res.status(400).send({ message: "Pembelian gagal!!" });
+        fs.unlinkSync("uploads/tiket/" + newID + ".jpg");
+        return res.status(400).send({ message: "Kursi sudah dibeli" });
       }
-      return res.status(400).send({ message: "Kursi sudah dibeli!!" });
+      fs.unlinkSync("uploads/tiket/" + newID + ".jpg");
+      return res.status(404).send({ message: "Kursi tidak ditemukan" });
     }
-    return res.status(400).send({ message: "Pembelian gagal!!" });
-  }
-  return res.status(404).send({ message: "Jadwal tidak ditemukan!!" });
+    fs.unlinkSync("uploads/tiket/" + newID + ".jpg");
+    return res.status(404).send({ message: "Jadwal tidak ditemukan" });
+  });
 };
 
 const queryBioskop = async (req, res) => {
