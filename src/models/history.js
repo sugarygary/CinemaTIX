@@ -17,6 +17,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   History.init(
     {
+      id_history: {
+        primaryKey: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       id_jadwal: {
         type: DataTypes.STRING,
         allowNull: false,

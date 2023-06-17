@@ -3,9 +3,22 @@ const { Op } = require("sequelize");
 const Joi = require("joi").extend(require("@joi/date"));
 
 const pesanTiket = async (req, res) => {
+  let token = req.header("x-api-key");
+  if (token == undefined || token == "") {
+    return res.status(401).send({ message: "API Key harus diisi" });
+  }
+  const marketplace = await db.Marketplace.findOne({
+    where: {
+      api_key: {
+        [Op.eq]: token,
+      },
+    },
+    attributes: ["username"],
+  });
+  if (!marketplace) {
+    return res.status(401).send({ message: "API Key invalid" });
+  }
   const { bukti_pembayaran, id_jadwal, nomor_kursi } = req.body;
-  const token = req.header("x-api-key");
-
   const find_jadwal = await db.Jadwal.findOne({
     where: {
       id_jadwal: {
@@ -13,17 +26,7 @@ const pesanTiket = async (req, res) => {
       },
     },
   });
-
   if (find_jadwal) {
-    const marketplace = await db.Marketplace.findOne({
-      where: {
-        api_key: {
-          [Op.eq]: token,
-        },
-      },
-      attributes: ["username"],
-    });
-
     const check_available_kursi = await db.Tiket.findOne({
       where: {
         id_jadwal: {
@@ -35,7 +38,7 @@ const pesanTiket = async (req, res) => {
       },
     });
 
-    if (check_available_kursi && marketplace) {
+    if (check_available_kursi) {
       console.log(check_available_kursi);
       if (check_available_kursi.status == 0) {
         const pembelian = await db.History.create({
@@ -72,13 +75,10 @@ const pesanTiket = async (req, res) => {
             kode_tiket: check_available_kursi.id_tiket,
           });
         }
-
         return res.status(400).send({ message: "Pembelian gagal!!" });
       }
-
       return res.status(400).send({ message: "Kursi sudah dibeli!!" });
     }
-
     return res.status(400).send({ message: "Pembelian gagal!!" });
   }
   return res.status(404).send({ message: "Jadwal tidak ditemukan!!" });
@@ -170,107 +170,172 @@ const showCabang = async (req, res) => {
 };
 
 const showJadwal = async (req, res) => {
-  let { id_cabang, id_movie } = req.query;
-
-  if (!id_cabang) {
-    return res.status(400).send({ message: "Input ID cabang" });
+  let token = req.header("x-api-key");
+  if (token == undefined || token == "") {
+    return res.status(401).send({ message: "API Key harus diisi" });
   }
-
-  if (!id_movie) {
-    const search_cabang = await db.Cabang.findOne({
-      where: {
-        id_cabang: {
-          [Op.eq]: id_cabang,
-        },
+  const marketplace = await db.Marketplace.findOne({
+    where: {
+      api_key: {
+        [Op.eq]: token,
       },
+    },
+    attributes: ["username"],
+  });
+  if (!marketplace) {
+    return res.status(401).send({ message: "API Key invalid" });
+  }
+  let { id_cabang } = req.params;
+  let today = new Date();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let time =
+    today.getHours().toString().padStart(2, "0") +
+    ":" +
+    today.getMinutes().toString().padStart(2, "0");
+  let dateTime = date + " " + time;
+  let result = [];
+  if (id_cabang == undefined || id_cabang == "") {
+    return res.status(400).send({ message: "ID Cabang harus diisi" });
+  }
+  const cabang = await db.Cabang.findByPk(id_cabang);
+  if (!cabang) {
+    return res.status(404).send({ message: "Cabang tidak terdaftar" });
+  }
+  let studios = await cabang.getStudios();
+  if (studios.length == 0) {
+    return res.status(404).send({ message: "Cabang tidak memiliki studio" });
+  }
+  for (let i = 0; i < studios.length; i++) {
+    const element = studios[i];
+    let jadwals = await element.getJadwals({
+      where: { jadwal_tayang: { [Op.gt]: dateTime } },
     });
-
-    if (!search_cabang) {
-      return res.status(404).send({ message: "Cabang tidak ditemukan" });
+    if (jadwals.length == 0) {
+      continue;
     }
-
-    const search_studio = await db.Studio.findAll({
-      where: {
-        id_cabang: {
-          [Op.eq]: id_cabang,
-        },
-      },
-    });
-
-    const list_jadwal = [];
-
-    for (let j = 0; j < search_studio.length; j++) {
-      const search_jadwal = await db.Jadwal.findAll({
-        where: {
-          id_studio: {
-            [Op.eq]: search_studio[j].id_studio,
-          },
-        },
+    for (let j = 0; j < jadwals.length; j++) {
+      const e = jadwals[j];
+      const kursi_tersedia = await db.Tiket.count({
+        where: { id_jadwal: e.id_jadwal, status: 0 },
       });
-
-      for (let k = 0; k < search_jadwal.length; k++) {
-        const data = {
-          id_jadwal: search_jadwal[k].id_jadwal,
-          id_studio: search_jadwal[k].id_studio,
-          judul_film: search_jadwal[k].judul_film,
-          jadwal_tayang: search_jadwal[k].jadwal_tayang,
-          "durasi (menit)": search_jadwal[k].durasi,
-          age_rating: search_jadwal[k].age_rating,
-          harga: search_jadwal[k].harga,
-          synopsis: search_jadwal[k].synopsis,
-        };
-        list_jadwal.push(data);
-      }
+      result.push({
+        id_jadwal: e.id_jadwal,
+        judul_film: e.judul_film,
+        nama_cabang: cabang.nama,
+        alamat: cabang.alamat,
+        jam_tayang: e.jadwal_tayang,
+        studio: element.nomor_studio,
+        jenis_studio: element.jenis_studio,
+        harga: e.harga + 5000,
+        kursi_tersedia,
+      });
     }
+  }
+  if (result.length == 0) {
+    return res
+      .status(404)
+      .send({ message: "Tidak ada jadwal yang tersedia pada cabang ini" });
+  }
+  return res.status(200).send(result);
+};
 
-    return res.status(200).send({
-      jadwal: list_jadwal,
-    });
-  } else if (
-    id_movie != undefined &&
-    id_movie.length > 0 &&
-    (id_cabang == undefined || id_cabang.length === 0)
-  ) {
-    const search_jadwal = await db.Jadwal.findAll({
-      where: {
-        id_film: {
-          [Op.eq]: id_movie,
-        },
+const search_jadwal_by_movie = async function (req, res) {
+  let token = req.header("x-api-key");
+  if (token == undefined || token == "") {
+    return res.status(401).send({ message: "API Key harus diisi" });
+  }
+  const marketplace = await db.Marketplace.findOne({
+    where: {
+      api_key: {
+        [Op.eq]: token,
       },
+    },
+    attributes: ["username"],
+  });
+  if (!marketplace) {
+    return res.status(401).send({ message: "API Key invalid" });
+  }
+  const { id_film } = req.params;
+  let today = new Date();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let time =
+    today.getHours().toString().padStart(2, "0") +
+    ":" +
+    today.getMinutes().toString().padStart(2, "0");
+  let dateTime = date + " " + time;
+  const result = [];
+  if (id_film == "" || id_film == undefined) {
+    return res.status(400).send({ message: "Movie ID harus diisi" });
+  }
+  const jadwal = await db.Jadwal.findAll({
+    where: { id_film, jadwal_tayang: { [Op.gt]: dateTime } },
+  });
+  if (jadwal.length == 0) {
+    return res
+      .status(404)
+      .send({ message: "Film tidak tayang di bioskop manapun" });
+  }
+  for (let i = 0; i < jadwal.length; i++) {
+    const element = jadwal[i];
+    const studio = await element.getStudio();
+    const cabang = await studio.getCabang();
+    const kursi_tersedia = await db.Tiket.count({
+      where: { id_jadwal: element.id_jadwal, status: 0 },
     });
-
-    if (!search_jadwal) {
-      return res.status(404).send({ message: "Movie not found!!" });
-    }
-
-    const list_jadwal = [];
-
-    for (let k = 0; k < search_jadwal.length; k++) {
-      const data = {
-        id_jadwal: search_jadwal[k].id_jadwal,
-        id_studio: search_jadwal[k].id_studio,
-        judul_film: search_jadwal[k].judul_film,
-        jadwal_tayang: search_jadwal[k].jadwal_tayang,
-        "durasi(menit)": search_jadwal[k].durasi,
-        age_rating: search_jadwal[k].age_rating,
-        harga: search_jadwal[k].harga,
-        synopsis: search_jadwal[k].synopsis,
-      };
-
-      list_jadwal.push(data);
-    }
-
-    return res.status(200).send({
-      jadwal: list_jadwal,
+    result.push({
+      id_jadwal: element.id_jadwal,
+      judul_film: element.judul_film,
+      nama_cabang: cabang.nama,
+      alamat: cabang.alamat,
+      jam_tayang: element.jadwal_tayang,
+      studio: studio.nomor_studio,
+      jenis_studio: studio.jenis_studio,
+      harga: element.harga + 5000,
+      kursi_tersedia,
     });
   }
-
-  return res.status(400).send({ message: "Input id cabang atau movie" });
+  return res.status(200).send(result);
 };
 
 const showKursi = async (req, res) => {
+  let token = req.header("x-api-key");
+  if (token == undefined || token == "") {
+    return res.status(401).send({ message: "API Key harus diisi" });
+  }
+  let today = new Date();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let time =
+    today.getHours().toString().padStart(2, "0") +
+    ":" +
+    today.getMinutes().toString().padStart(2, "0");
+  let dateTime = date + " " + time;
+  const marketplace = await db.Marketplace.findOne({
+    where: {
+      api_key: {
+        [Op.eq]: token,
+      },
+    },
+    attributes: ["username"],
+  });
+  if (!marketplace) {
+    return res.status(401).send({ message: "API Key invalid" });
+  }
   let { id_jadwal } = req.params;
-
   const search_jadwal = await db.Jadwal.findOne({
     where: {
       id_jadwal: {
@@ -278,6 +343,11 @@ const showKursi = async (req, res) => {
       },
     },
   });
+  if (search_jadwal.jadwal_tayang < dateTime) {
+    return res.status(400).send({
+      message: "Jadwal sudah melewati tanggal pembelian",
+    });
+  }
 
   if (!search_jadwal) {
     return res.status(404).send({
@@ -311,4 +381,5 @@ module.exports = {
   showCabang,
   showJadwal,
   showKursi,
+  search_jadwal_by_movie,
 };

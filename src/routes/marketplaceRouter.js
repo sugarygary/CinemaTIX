@@ -19,6 +19,7 @@ const {
   showCabang,
   showJadwal,
   showKursi,
+  search_jadwal_by_movie,
 } = require("../controllers/marketplaceController");
 
 marketplaceRouter.post(
@@ -28,7 +29,8 @@ marketplaceRouter.post(
 );
 marketplaceRouter.get("/detail-bioskop", queryBioskop);
 marketplaceRouter.get("/show-bioskop/:id_bioskop", showCabang);
-marketplaceRouter.get("/show-jadwal", showJadwal);
+marketplaceRouter.get("/show-jadwal-by-cabang/:id_cabang", showJadwal);
+marketplaceRouter.get("/show-jadwal-by-movie/:id_film", search_jadwal_by_movie);
 marketplaceRouter.get("/show-kursi/:id_jadwal", showKursi);
 
 module.exports = marketplaceRouter;
