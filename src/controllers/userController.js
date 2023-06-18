@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../models");
-
+const bcrypt = require("bcrypt");
+const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 const { Op } = require("sequelize");
 const Joi = require("joi").extend(require("@joi/date"));
 const checkUniqueBioskop_username = async (username) => {
@@ -60,16 +61,20 @@ const registerBioskop = async (req, res) => {
     let intID = parseInt(ctrID.substring(1)) + 1;
     let new_id = "B" + intID.toString().padStart(3, "0");
     let api_key = randomApiKey(10);
+    const hash_password = bcrypt.hashSync(
+      validationResult.password,
+      SALT_ROUNDS
+    );
     user = await db.Bioskop.create({
       id_bioskop: new_id,
       username: validationResult.username,
       nama: validationResult.nama,
-      password: validationResult.password,
+      password: hash_password,
       api_key: api_key,
     });
 
     return res.status(201).send({
-      msg: "akun berhasil dibuat",
+      message: "Akun berhasil dibuat",
       username: validationResult.username,
       nama: validationResult.nama,
     });
@@ -118,18 +123,23 @@ const loginBioskop = async (req, res) => {
     const u = await db.Bioskop.findOne({
       where: {
         username: validationResult.username,
-        password: validationResult.password,
+        // password: validationResult.password,
       },
     });
     if (u) {
-      return res.status(200).send({
-        msg: "Berhasil Login",
-        username: u.username,
-        api_key: u.api_key,
+      if (bcrypt.compareSync(validationResult.password, u.password)) {
+        return res.status(200).send({
+          message: "Berhasil Login",
+          username: u.username,
+          api_key: u.api_key,
+        });
+      }
+      return res.status(400).send({
+        message: "Password salah",
       });
     } else {
       return res.status(400).send({
-        msg: "Gagal Login",
+        message: "Akun tidak ditemukan",
       });
     }
   } catch (error) {
@@ -183,16 +193,20 @@ const registerWebReview = async (req, res) => {
     let new_id = "WR" + intID.toString().padStart(3, "0");
     console.log(new_id);
     let api_key = randomApiKey(10);
+    const hash_password = bcrypt.hashSync(
+      validationResult.password,
+      SALT_ROUNDS
+    );
     user = await db.WebReview.create({
       id_web_review: new_id,
       username: validationResult.username,
       nama_web_review: validationResult.nama_web_review,
-      password: validationResult.password,
+      password: hash_password,
       api_key: api_key,
     });
 
     return res.status(201).send({
-      msg: "akun berhasil dibuat",
+      message: "akun berhasil dibuat",
       username: validationResult.username,
       nama_web_review: validationResult.nama_web_review,
     });
@@ -239,18 +253,22 @@ const loginWebReview = async (req, res) => {
     const u = await db.WebReview.findOne({
       where: {
         username: validationResult.username,
-        password: validationResult.password,
       },
     });
     if (u) {
-      return res.status(200).send({
-        msg: "Berhasil Login",
-        username: u.username,
-        api_key: u.api_key,
+      if (bcrypt.compareSync(validationResult.password, u.password)) {
+        return res.status(200).send({
+          message: "Berhasil Login",
+          username: u.username,
+          api_key: u.api_key,
+        });
+      }
+      return res.status(400).send({
+        message: "Password salah",
       });
     } else {
       return res.status(400).send({
-        msg: "Gagal Login",
+        message: "Akun tidak ditemukan",
       });
     }
   } catch (error) {
@@ -338,10 +356,11 @@ const registerMarketplace = async (req, res) => {
   const api_key = randomApiKey(10);
 
   try {
+    const hash_password = bcrypt.hashSync(password, SALT_ROUNDS);
     const create_marketplace = await db.Marketplace.create({
       username: username,
       name: name,
-      password: password,
+      password: hash_password,
       api_key: api_key,
     });
 
@@ -394,9 +413,9 @@ const loginMarketplace = async (req, res) => {
     },
   });
 
-  if (search_marketplace.password === password) {
+  if (bcrypt.compareSync(password, search_marketplace.password)) {
     return res.status(200).send({
-      message: "Login berhasil!!",
+      message: "Login berhasil",
       api_key: search_marketplace.api_key,
     });
   } else {
