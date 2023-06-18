@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
   class Marketplace extends Model {
     static associate(models) {
       this.hasMany(models.History, {
-        foreignKey: "username",
+        foreignKey: "id_marketplace",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       });

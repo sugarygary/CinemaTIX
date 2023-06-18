@@ -420,7 +420,69 @@ const showKursi = async (req, res) => {
     kursi_tersedia: data,
   });
 };
-
+const showTiket = async function (req, res) {
+  let token = req.header("x-api-key");
+  if (token == undefined || token == "") {
+    return res.status(401).send({ message: "API Key harus diisi" });
+  }
+  const marketplace = await db.Marketplace.findOne({
+    where: {
+      api_key: {
+        [Op.eq]: token,
+      },
+    },
+    attributes: ["username"],
+  });
+  if (!marketplace) {
+    return res.status(401).send({ message: "API Key invalid" });
+  }
+  const history = await db.History.findAll({
+    where: { id_marketplace: marketplace.username },
+  });
+  if (history.length == 0) {
+    return res.status(404).send({ message: "Anda tidak memiliki tiket" });
+  }
+  let pending = [];
+  let approved = [];
+  let rejected = [];
+  for (let i = 0; i < history.length; i++) {
+    const element = history[i];
+    const tiket = await db.Tiket.findByPk(element.id_tiket);
+    const jadwal = await tiket.getJadwal();
+    const studio = await jadwal.getStudio();
+    const cabang = await studio.getCabang();
+    if (element.status == 0) {
+      pending.push({
+        id_tiket: tiket.id_tiket,
+        judul_film: jadwal.judul_film,
+        lokasi: cabang.nama,
+        studio: studio.nomor_studio,
+        nomor_kursi: tiket.nomor_kursi,
+        jam_tayang: jadwal.jadwal_tayang,
+      });
+    } else if (element.status == 1) {
+      approved.push({
+        id_tiket: tiket.id_tiket,
+        judul_film: jadwal.judul_film,
+        lokasi: cabang.nama,
+        studio: studio.nomor_studio,
+        nomor_kursi: tiket.nomor_kursi,
+        jam_tayang: jadwal.jadwal_tayang,
+        barcode_key: tiket.barcode_key,
+      });
+    } else if (element.status == 2) {
+      rejected.push({
+        id_tiket: tiket.id_tiket,
+        judul_film: jadwal.judul_film,
+        lokasi: cabang.nama,
+        studio: studio.nomor_studio,
+        nomor_kursi: tiket.nomor_kursi,
+        jam_tayang: jadwal.jadwal_tayang,
+      });
+    }
+  }
+  return res.status(200).send({ approved, pending, rejected });
+};
 module.exports = {
   pesanTiket,
   queryBioskop,
@@ -428,4 +490,5 @@ module.exports = {
   showJadwal,
   showKursi,
   search_jadwal_by_movie,
+  showTiket,
 };
