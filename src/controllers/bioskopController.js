@@ -1,8 +1,10 @@
+require("dotenv").config();
 const { default: axios } = require("axios");
 const db = require("../models");
 const { Op } = require("sequelize");
+const { DateTime } = require("luxon");
 const Joi = require("joi").extend(require("@joi/date"));
-const IMDB_API_KEY = "a636df9869msh090dff929636d90p1f4196jsnc1d1abb1880c";
+const { IMDB_API_KEY } = process.env;
 
 const checkValidId_Bioskop = async (id_bioskop) => {
   const b = await db.Bioskop.findOne({
@@ -54,13 +56,134 @@ const validateBioskopAPIKey = async function (req, res, next) {
     },
   });
   if (!u) {
-    return res.status(401).send("API Key invalid");
+    return res.status(401).send({ message: "API Key invalid" });
   }
   req.user = u;
   next();
 };
 
-const validateIMDBID = async function (id_film) {};
+const editTiket = async (req, res) => {
+  const { id_jadwal, nomor_kursi } = req.body;
+  if (
+    id_jadwal == "" ||
+    id_jadwal == undefined ||
+    nomor_kursi == undefined ||
+    nomor_kursi == ""
+  ) {
+    return res
+      .status(400)
+      .send({ message: "ID Jadwal dan Nomor Kursi harus diisi" });
+  }
+  const id_tiket = nomor_kursi + "" + id_jadwal;
+  const tiket = await db.Tiket.findByPk(id_tiket);
+  if (!tiket) {
+    return res.status(404).send({ message: "Tiket tidak ditemukan" });
+  }
+  const cabang = await (
+    await (await tiket.getJadwal()).getStudio()
+  ).getCabang();
+  if (cabang.id_bioskop != req.user.id_bioskop) {
+    return res
+      .status(403)
+      .send({ message: "Tiket bukan merupakan tiket anda" });
+  }
+  if (tiket.status == 1) {
+    if (tiket.barcode_key) {
+      return res
+        .status(403)
+        .send({ message: "Hubungi pihak CinemaTIX untuk proses void tiket" });
+    }
+    return res.status(400).send({ message: "Tiket sudah pernah divoid" });
+  }
+  await tiket.update({ status: 1 });
+  return res.status(200).send({ message: "Tiket berhasil divoid" });
+};
+
+const getCabang = async function (req, res) {
+  const cabang = await req.user.getCabangs({
+    attributes: { exclude: ["id_bioskop"] },
+  });
+  let result = [];
+  for (let i = 0; i < cabang.length; i++) {
+    const element = cabang[i];
+    const studios = await element.getStudios({
+      attributes: ["nomor_studio", "jenis_studio", "baris", "kolom"],
+    });
+    result.push({ ...element.dataValues, studio: studios });
+  }
+  return res.status(200).send(result);
+};
+const getSales = async function (req, res) {
+  const result = [];
+  let total_penghasilan = 0;
+  const history = await db.History.findAll({ where: { status: 1 } });
+  for (let i = 0; i < history.length; i++) {
+    const element = history[i];
+    const jadwal = await db.Jadwal.findByPk(element.id_jadwal);
+    const studio = await jadwal.getStudio();
+    const cabang = await studio.getCabang();
+    const bioskop = await cabang.getBioskop();
+    if (bioskop.id_bioskop != req.user.id_bioskop) {
+      continue;
+    }
+    total_penghasilan += element.nominal - 5000;
+    result.push({
+      cabang: cabang.nama,
+      tiket: element.id_tiket,
+      film: jadwal.judul_film,
+      marketplace: element.id_marketplace,
+      pendapatan: element.nominal - 5000,
+    });
+  }
+  return res.status(200).send({ total_penghasilan, sales_report: result });
+};
+
+const getJadwal = async function (req, res) {
+  const { id_cabang } = req.params;
+  const cabang = await db.Cabang.findByPk(id_cabang);
+  if (!cabang) {
+    return res.status(404).send({ message: "Cabang tidak terdaftar" });
+  }
+  if (cabang.id_bioskop != req.user.id_bioskop) {
+    return res.status(403).send({ message: "Anda bukan pemilik cabang" });
+  }
+  let result = [];
+
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let time =
+    today.getHours().toString().padStart(2, "0") +
+    ":" +
+    today.getMinutes().toString().padStart(2, "0") +
+    ":" +
+    today.getSeconds().toString().padStart(2, "0");
+  let dateTime = date + " " + time;
+  const studios = await cabang.getStudios({
+    attributes: ["id_studio", "nomor_studio", "jenis_studio", "baris", "kolom"],
+  });
+  for (let i = 0; i < studios.length; i++) {
+    const element = studios[i];
+    const jadwals = await element.getJadwals({
+      attributes: { exclude: ["id_studio"] },
+      where: { jadwal_tayang: { [Op.gte]: dateTime } },
+    });
+    for (let j = 0; j < jadwals.length; j++) {
+      const e = jadwals[j];
+      result.push({
+        studio: element.nomor_studio,
+        jenis_studio: element.jenis_studio,
+        ...e.dataValues,
+      });
+    }
+  }
+
+  return res.status(200).send(result);
+};
 
 const registerCabang = async (req, res) => {
   const validator = Joi.object({
@@ -324,4 +447,8 @@ module.exports = {
   registerStudio,
   registerJadwal,
   validateBioskopAPIKey,
+  getCabang,
+  getJadwal,
+  getSales,
+  editTiket,
 };

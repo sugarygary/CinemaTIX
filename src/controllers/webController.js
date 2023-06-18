@@ -3,6 +3,7 @@ const db = require("../models");
 const { Op } = require("sequelize");
 const Joi = require("joi").extend(require("@joi/date"));
 const multer = require("multer");
+const { DateTime } = require("luxon");
 
 async function cekSubscription(req, res, next) {
   let token = req.header("x-api-key");
@@ -17,7 +18,7 @@ async function cekSubscription(req, res, next) {
   if (!requester) {
     return res.status(401).send({ message: "API Key Invalid" });
   }
-  let lastMonth = new Date();
+  let lastMonth = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   lastMonth.setDate(lastMonth.getDate() - 30);
   let lmdate =
     lastMonth.getFullYear() +
@@ -85,7 +86,7 @@ const showJadwal = async (req, res) => {
   if (error) {
     return res.status(400).send({ message: "Movie ID harus diisi" });
   }
-  let today = new Date();
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   let date =
     today.getFullYear() +
     "-" +
@@ -216,7 +217,7 @@ const pembayaran = async (req, res) => {
         .status(400)
         .send({ message: "Masukkan bukti pembayaran berupa foto" });
     }
-    let today = new Date();
+    let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
     let date =
       today.getFullYear() +
       "-" +
@@ -241,7 +242,7 @@ const pembayaran = async (req, res) => {
       fs.unlinkSync("uploads/subscription/" + newID + ".jpg");
       return res.status(401).send({ message: "Invalid API Key" });
     }
-    let lastMonth = new Date();
+    let lastMonth = DateTime.now().setZone("Asia/Jakarta").toJSDate();
     lastMonth.setDate(today.getDate() - 30);
     let lmdate =
       lastMonth.getFullYear() +
@@ -291,7 +292,7 @@ const nowShowing = async (req, res) => {
   let nowShowing = [];
   let temp;
   let allFilm = await db.Jadwal.findAll();
-  let today = new Date();
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   let jam = today.getHours();
   let menit = today.getMinutes();
 
@@ -335,7 +336,7 @@ const nowShowing = async (req, res) => {
 };
 
 const nowShowing_2 = async (req, res) => {
-  let today = new Date();
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   let date =
     today.getFullYear() +
     "-" +
@@ -373,7 +374,7 @@ const nowShowing_2 = async (req, res) => {
 
 const comingSoon = async function (req, res) {
   let coming_soon = [];
-  let today = new Date();
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   let date =
     today.getFullYear() +
     "-" +

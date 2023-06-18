@@ -3,6 +3,7 @@ const { Op } = require("sequelize");
 const fs = require("fs");
 const Joi = require("joi").extend(require("@joi/date"));
 const multer = require("multer");
+const { DateTime } = require("luxon");
 const pesanTiket = async (req, res) => {
   let token = req.header("x-api-key");
   if (token == undefined || token == "") {
@@ -232,7 +233,7 @@ const showJadwal = async (req, res) => {
     return res.status(401).send({ message: "API Key invalid" });
   }
   let { id_cabang } = req.params;
-  let today = new Date();
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   let date =
     today.getFullYear() +
     "-" +
@@ -307,7 +308,7 @@ const search_jadwal_by_movie = async function (req, res) {
     return res.status(401).send({ message: "API Key invalid" });
   }
   const { id_film } = req.params;
-  let today = new Date();
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   let date =
     today.getFullYear() +
     "-" +
@@ -358,7 +359,7 @@ const showKursi = async (req, res) => {
   if (token == undefined || token == "") {
     return res.status(401).send({ message: "API Key harus diisi" });
   }
-  let today = new Date();
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
   let date =
     today.getFullYear() +
     "-" +
