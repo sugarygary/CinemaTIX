@@ -414,6 +414,12 @@ const loginMarketplace = async (req, res) => {
   });
 
   if (bcrypt.compareSync(password, search_marketplace.password)) {
+    if (!search_marketplace.api_key) {
+      return res.status(403).send({
+        message:
+          "Akun anda terkena suspend. Hubungi CinemaTIX untuk mengakses akun anda",
+      });
+    }
     return res.status(200).send({
       message: "Login berhasil",
       api_key: search_marketplace.api_key,

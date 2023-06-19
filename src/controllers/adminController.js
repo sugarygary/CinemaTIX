@@ -1,4 +1,5 @@
 const db = require("../models");
+const HEADER_ADMIN = process.env.HEADER_ADMIN;
 function randomBarcodeKey(length) {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -17,7 +18,7 @@ const accWebReview = async (req, res) => {
       message: "Invalid API Key",
     });
   }
-  if (token == "admin") {
+  if (token == HEADER_ADMIN) {
     let subs = await db.Subscription.findByPk(req.params.id_subscription);
     if (!subs) {
       return res
@@ -47,7 +48,7 @@ const approveTiket = async (req, res) => {
       message: "Invalid API Key",
     });
   }
-  if (token == "admin") {
+  if (token == HEADER_ADMIN) {
     let id_tiket = req.params.id_tiket;
     let history = await db.History.findOne({ where: { id_tiket } });
     if (!history) {
@@ -87,7 +88,7 @@ const rejectTiket = async (req, res) => {
       message: "Invalid API Key",
     });
   }
-  if (token == "admin") {
+  if (token == HEADER_ADMIN) {
     let id_tiket = req.params.id_tiket;
     let history = await db.History.findOne({ where: { id_tiket } });
     if (!history) {
@@ -117,7 +118,7 @@ const getRequestTiket = async (req, res) => {
       message: "Invalid API Key",
     });
   }
-  if (token == "admin") {
+  if (token == HEADER_ADMIN) {
     let history = await db.History.findAll({
       where: { status: 0 },
       attributes: { exclude: ["status"] },
@@ -129,9 +130,23 @@ const getRequestTiket = async (req, res) => {
     });
   }
 };
+
+const revokeMarketplace = async (req, res) => {
+  const username = req.params.username;
+  const marketplace = await db.Marketplace.findByPk(username);
+  if (!marketplace) {
+    return res.status(404).send({ message: "Marketplace tidak ditemukan" });
+  }
+  if (!marketplace.api_key) {
+    return res.status(400).send({ message: "Akun sudah di revoke sebelumnya" });
+  }
+  await marketplace.update({ api_key: null });
+  return res.status(200).send({ message: "Akun berhasil di revoke" });
+};
 module.exports = {
   accWebReview,
   approveTiket,
   rejectTiket,
   getRequestTiket,
+  revokeMarketplace,
 };

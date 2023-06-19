@@ -62,6 +62,38 @@ const validateBioskopAPIKey = async function (req, res, next) {
   next();
 };
 
+const deleteCabang = async function (req, res) {
+  const { id_cabang } = req.params;
+  const cabang = await db.Cabang.findByPk(id_cabang);
+  if (cabang.id_bioskop != req.user.id_bioskop) {
+    return res.status(403).send({ message: "Anda bukan pemilik cabang" });
+  }
+  let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
+  let date =
+    today.getFullYear() +
+    "-" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "-" +
+    today.getDate().toString().padStart(2, "0");
+  let time =
+    today.getHours().toString().padStart(2, "0") +
+    ":" +
+    today.getMinutes().toString().padStart(2, "0");
+  let dateTime = date + " " + time;
+  const studios = await cabang.getStudios();
+  for (let i = 0; i < studios.length; i++) {
+    const element = studios[i];
+    const jadwals = await element.getJadwals({
+      where: { jadwal_tayang: { [Op.gte]: dateTime } },
+    });
+    if (jadwals.length != 0) {
+      return res.status(400).send({ message: "Cabang masih memiliki jadwal" });
+    }
+  }
+  await cabang.destroy();
+  return res.status(200).send({ message: "Cabang berhasil dihapus" });
+};
+
 const editTiket = async (req, res) => {
   const { id_jadwal, nomor_kursi } = req.body;
   if (
@@ -451,4 +483,5 @@ module.exports = {
   getJadwal,
   getSales,
   editTiket,
+  deleteCabang,
 };
