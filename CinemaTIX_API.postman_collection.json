@@ -1,0 +1,1150 @@
+{
+	"info": {
+		"_postman_id": "41e961dc-9183-4da0-87d1-b09ef2902622",
+		"name": "CinemaTIX API",
+		"description": "API ini digunakan untuk developer bioskop untuk mempromosikan dan melakukan pembelian tiket yang akan dilakukan oleh beberapa marketplace dan website-website review",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "25654198",
+		"_collection_link": "https://warped-station-210798.postman.co/workspace/Proyek-CinemaTIX~1cd61b85-189a-44d9-93ca-31418909dd60/collection/25654198-41e961dc-9183-4da0-87d1-b09ef2902622?action=share&creator=25654198&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "Bioskop",
+			"item": [
+				{
+					"name": "Register Bioskop Developer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "devcgv",
+									"description": "Username developer bioskop yang akan digunakan untuk login",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"description": "Password developer bioskop yang akan digunakan untuk login. Minimal 5 karakter",
+									"type": "text"
+								},
+								{
+									"key": "nama",
+									"value": "CGV Cinema",
+									"description": "Nama perusahaan bioskop",
+									"type": "text"
+								}
+							]
+						},
+						"url": "https://localhost:3000/api/users/register-bioskop",
+						"description": "Endpoint ini digunakan untuk registrasi akun developer milik bioskop. Bioskop bisa menambahkan cabang, studio, dan jadwal baru."
+					},
+					"response": []
+				},
+				{
+					"name": "Login Bioskop Developer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "devcgv",
+									"description": "Username bioskop sesuai registrasi",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"description": "Password bioskop sesuai registrasi",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/users/login-bioskop",
+						"description": "Endpoint ini digunakan untuk mendapatkan API key developer bioskop untuk mengakses endpoint developer bioskop yang membutuhkan Authentication dan Authorization."
+					},
+					"response": []
+				},
+				{
+					"name": "Buka Cabang Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "nama",
+									"value": "Galaxy Mall",
+									"description": "Nama cabang bioskop. Akan diappend dengan nama bioskop. \nContoh : \nnama_bioskop : Cinema XXI\nnama_cabang : Galaxy Mall\nnama_cabang : Cinema XXI Galaxy Mall\n",
+									"type": "text"
+								},
+								{
+									"key": "alamat",
+									"value": "Jl. Dr. Ir. H. Soekarno No.35-39, Mulyorejo, Surabaya, East Java 60115",
+									"description": "Alamat lengkap cabang bioskop",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/bioskop/register-cabang",
+						"description": "Endpoint ini akan digunakan untuk membuat cabang bioskop baru. Cabang bioskop akan memiliki beberapa studio."
+					},
+					"response": []
+				},
+				{
+					"name": "Buat Studio Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id_cabang",
+									"value": "CB001",
+									"description": "ID cabang studio yang dimiliki.",
+									"type": "text"
+								},
+								{
+									"key": "baris",
+									"value": "12",
+									"description": "Jumlah baris studio dari atas ke bawah (A-Z). Maksimal 26 baris.",
+									"type": "text"
+								},
+								{
+									"key": "kolom",
+									"value": "12",
+									"description": "Jumlah kolom studio dari kiri ke kanan(1-99). Maksimal 99 kolom.",
+									"type": "text"
+								},
+								{
+									"key": "jenis_studio",
+									"value": "Dolby Atmos",
+									"description": "Jenis studio",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/bioskop/register-studio",
+						"description": "Endpoint ini akan digunakan untuk membuat studio dari cabang bioskop yang dimiliki. Pastikan untuk menginput studio secara urut mulai dari studio 1 sampai terakhir karena nomor studio akan auto-generate. Studio akan memiliki jadwal film."
+					},
+					"response": []
+				},
+				{
+					"name": "Buat Jadwal Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"type": "text",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id_studio",
+									"value": "CB001-01",
+									"description": "ID Studio yang akan menampilkan film.",
+									"type": "text"
+								},
+								{
+									"key": "id_film",
+									"value": "tt10366206",
+									"description": "ID Film sesuai iMDB.",
+									"type": "text"
+								},
+								{
+									"key": "harga",
+									"value": "50000",
+									"description": "Harga tiket",
+									"type": "text"
+								},
+								{
+									"key": "jadwal_tayang",
+									"value": "2023-07-14 19:00",
+									"description": "Jadwal tayang bioskop. Format YYYY-MM-DD HH:mm",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/bioskop/register-jadwal",
+						"description": "Endpoint ini digunakan untuk membuat jadwal baru. Endpoint ini akan otomatis membuatkan tiket sesuai baris dan kolom studio."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cabang",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"type": "text",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": "localhost:3000/api/bioskop/cabang",
+						"description": "Endpoint ini akan menampilkan cabang yang dimiliki bioskop beserta studionya."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Jadwal",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"type": "text",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/bioskop/jadwal/:id_cabang",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"bioskop",
+								"jadwal",
+								":id_cabang"
+							],
+							"variable": [
+								{
+									"key": "id_cabang",
+									"value": "CB001",
+									"description": "ID Cabang yang dimiliki bioskop"
+								}
+							]
+						},
+						"description": "Endpoint ini akan menampilkan jadwal yang tayang pada cabang yang dimiliki bioskop"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sales Report",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"type": "text",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": "localhost:3000/api/bioskop/sales-report",
+						"description": "Endpoint ini akan menampilkan total pendapatan dan history transaksi tiket yang berhasil."
+					},
+					"response": []
+				},
+				{
+					"name": "Void Tiket",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"type": "text",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id_jadwal",
+									"value": "JW00004",
+									"description": "ID Jadwal yang dimiliki bioskop",
+									"type": "text"
+								},
+								{
+									"key": "nomor_kursi",
+									"value": "A01",
+									"description": "Nomor kursi tiket yang akan divoid",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/bioskop/void-tiket",
+						"description": "Endpoint ini digunakan untuk void tiket agar tidak bisa dibeli oleh marketplace. Endpoint ini berguna untuk meniadakan tiket-tiket yang sudah dibeli lewat pembelian di bioskop langsung secara offline atau nomor kursi tidak tersedia karena infrastruktur studio."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Cabang",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "37kpt8pjnX",
+								"type": "text",
+								"description": "Authentication dan Authorization Bioskop. Gunakan endpoint Login Bioskop Developer untuk mendapatkan API key."
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/bioskop/delete-cabang/:id_cabang",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"bioskop",
+								"delete-cabang",
+								":id_cabang"
+							],
+							"variable": [
+								{
+									"key": "id_cabang",
+									"value": "CB001",
+									"description": "ID Cabang yang akan dihapus"
+								}
+							]
+						},
+						"description": "Endpoint ini digunakan untuk menghapus cabang yang tidak aktif."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Web Review",
+			"item": [
+				{
+					"name": "Register Web Review",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "rottentomato",
+									"description": "Username developer web review yang akan digunakan untuk login.",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"description": "Password developer web review yang akan digunakan untuk login. Minimal 5 karakter",
+									"type": "text"
+								},
+								{
+									"key": "nama_web_review",
+									"value": "rottentomato",
+									"description": "Nama website review",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/users/register-webreview",
+						"description": "Endpoint ini digunakan untuk registrasi akun developer website review. Developer web bisa mengakses endpoint untuk menampilkan informasi bioskop dan film."
+					},
+					"response": []
+				},
+				{
+					"name": "Login Web Review",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "rottentomato",
+									"description": "Username web review sesuai registrasi",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"description": "Password web review sesuai registrasi",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/users/login-webreview",
+						"description": "Endpoint ini digunakan untuk mendapatkan API key developer web review untuk mengakses endpoint developer web review yang membutuhkan Authentication dan Authorization."
+					},
+					"response": []
+				},
+				{
+					"name": "Subscribe",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "nVPl0L7BBU",
+								"description": "Authentication dan Authorization Web Review. Gunakan endpoint Login Web Review untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "bukti_pembayaran",
+									"description": "Bukti pembayaran berupa gambar",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": "localhost:3000/api/webreview/pembayaran",
+						"description": "Endpoint ini digunakan webreview untuk berlangganan dengan CinemaTIX API supaya bisa mengakses informasi jadwal bioskop dan film yang up to date."
+					},
+					"response": []
+				},
+				{
+					"name": "Query Bioskop",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "nVPl0L7BBU",
+								"type": "text",
+								"description": "Authentication dan Authorization Web Review. Gunakan endpoint Login Web Review untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/webreview/query-bioskop?nama_bioskop=xxi",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"webreview",
+								"query-bioskop"
+							],
+							"query": [
+								{
+									"key": "nama_bioskop",
+									"value": "xxi",
+									"description": "Keyword pencarian nama bioskop"
+								}
+							]
+						},
+						"description": "Endpoint akan menampilkan bioskop sesuai keyword atau semua bioskop yang terdaftar di CinemaTIX jika keyword tidak disertakan."
+					},
+					"response": []
+				},
+				{
+					"name": "Show Jadwal",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "nVPl0L7BBU",
+								"type": "text",
+								"description": "Authentication dan Authorization Web Review. Gunakan endpoint Login Web Review untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/webreview/show-jadwal/:movie_id/:id_bioskop?",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"webreview",
+								"show-jadwal",
+								":movie_id",
+								":id_bioskop"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": null
+								}
+							],
+							"variable": [
+								{
+									"key": "movie_id",
+									"value": "tt10366206",
+									"description": "ID Film sesuai iMDB"
+								},
+								{
+									"key": "id_bioskop",
+									"value": "B001",
+									"description": "Optional. ID Bioskop untuk memfilter supaya menampilkan jadwal yang dimiliki oleh bioskop tertentu"
+								}
+							]
+						},
+						"description": "Endpoint ini berfungsi untuk menampilkan jadwal-jadwal bioskop sesuai film yang diinputkan."
+					},
+					"response": []
+				},
+				{
+					"name": "Now Showing",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "nVPl0L7BBU",
+								"type": "text",
+								"description": "Authentication dan Authorization Web Review. Gunakan endpoint Login Web Review untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": "localhost:3000/api/webreview/now-showing",
+						"description": "Endpoint ini akan menampilkan film yang tayang hari ini sesuai bioskop yang terdaftar di CinemaTIX"
+					},
+					"response": []
+				},
+				{
+					"name": "Coming Soon",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "nVPl0L7BBU",
+								"type": "text",
+								"description": "Authentication dan Authorization Web Review. Gunakan endpoint Login Web Review untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": "localhost:3000/api/webreview/coming-soon",
+						"description": "Endpoint ini akan menampilkan film yang akan segera tayang sesuai bioskop yang terdaftar di CinemaTIX"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Marketplace",
+			"item": [
+				{
+					"name": "Buat Marketplace",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "topedd",
+									"description": "Username developer marketplace yang akan digunakan untuk login.",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "Tokopedia",
+									"description": "Nama marketplace",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "12345156542",
+									"description": "Password developer marketplace yang akan digunakan untuk login.",
+									"type": "text"
+								},
+								{
+									"key": "confirm_password",
+									"value": "12345156542",
+									"description": "Konfirmasi password",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/users/register-marketplace",
+						"description": "Endpoint ini digunakan untuk registrasi akun developer marketplace. Developer marketplace bisa mengakses endpoint untuk menampilkan informasi bioskop dan memesan tiket."
+					},
+					"response": []
+				},
+				{
+					"name": "Login Marketplace",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "topedd",
+									"description": "Username marketplace sesuai registrasi",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "12345156542",
+									"description": "Password marketplace sesuai registrasi",
+									"type": "text"
+								}
+							]
+						},
+						"url": "localhost:3000/api/users/login-marketplace",
+						"description": "Endpoint ini digunakan untuk mendapatkan API key developer marketplace untuk mengakses endpoint developer marketplace yang membutuhkan Authentication dan Authorization."
+					},
+					"response": []
+				},
+				{
+					"name": "Query Bioskop",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "5Ca48SjQN0",
+								"description": "Authentication dan Authorization Marketplace. Gunakan endpoint Login Marketplace untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/marketplace/detail-bioskop?nama_bioskop=xx",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"marketplace",
+								"detail-bioskop"
+							],
+							"query": [
+								{
+									"key": "nama_bioskop",
+									"value": "xx",
+									"description": "Keyword pencarian bioskop"
+								}
+							]
+						},
+						"description": "Endpoint akan menampilkan bioskop sesuai keyword atau semua bioskop yang terdaftar di CinemaTIX jika keyword tidak disertakan."
+					},
+					"response": []
+				},
+				{
+					"name": "Cabang Bioskop",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "5Ca48SjQN0",
+								"description": "Authentication dan Authorization Marketplace. Gunakan endpoint Login Marketplace untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/marketplace/show-bioskop/:id_bioskop",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"marketplace",
+								"show-bioskop",
+								":id_bioskop"
+							],
+							"variable": [
+								{
+									"key": "id_bioskop",
+									"value": "B001",
+									"description": "ID Bioskop yang akan ditampilkan cabangnya"
+								}
+							]
+						},
+						"description": "Endpoint ini akan menampilkan informasi cabang dari suatu bioskop beserta studionya"
+					},
+					"response": []
+				},
+				{
+					"name": "Show Kursi Tersedia",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "5Ca48SjQN0",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "x-api-key",
+									"value": "5Ca48SjQN0",
+									"description": "Authentication dan Authorization Marketplace. Gunakan endpoint Login Marketplace untuk mendapatkan API key",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:3000/api/marketplace/show-kursi/:id_jadwal",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"marketplace",
+								"show-kursi",
+								":id_jadwal"
+							],
+							"variable": [
+								{
+									"key": "id_jadwal",
+									"value": "JW00003",
+									"description": "ID Jadwal yang akan ditampilkan kursinya"
+								}
+							]
+						},
+						"description": "Endpoint ini akan menampilkan kursi yang tersedia dalam suatu jadwal."
+					},
+					"response": []
+				},
+				{
+					"name": "Show Jadwal Filter By Movie",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "5Ca48SjQN0",
+								"description": "Authentication dan Authorization Marketplace. Gunakan endpoint Login Marketplace untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/marketplace/show-jadwal-by-movie/:id_film",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"marketplace",
+								"show-jadwal-by-movie",
+								":id_film"
+							],
+							"variable": [
+								{
+									"key": "id_film",
+									"value": "tt6791350",
+									"description": "ID Film sesuai iMDB"
+								}
+							]
+						},
+						"description": "Endpoint ini akan menampilkan jadwal yang menampilkan film tertentu"
+					},
+					"response": []
+				},
+				{
+					"name": "Show Jadwal On Cabang",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "5Ca48SjQN0",
+								"description": "Authentication dan Authorization Marketplace. Gunakan endpoint Login Marketplace untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/marketplace/show-jadwal-by-cabang/:id_cabang",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"marketplace",
+								"show-jadwal-by-cabang",
+								":id_cabang"
+							],
+							"variable": [
+								{
+									"key": "id_cabang",
+									"value": "CB001",
+									"description": "ID Cabang yang ingin ditampilkan jadwalnya"
+								}
+							]
+						},
+						"description": "Endpoint ini akan menampilkan seluruh jadwal yang dimiliki oleh cabang bioskop tertentu."
+					},
+					"response": []
+				},
+				{
+					"name": "Show Owned Tickets",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "5Ca48SjQN0",
+								"type": "text",
+								"description": "Authentication dan Authorization Marketplace. Gunakan endpoint Login Marketplace untuk mendapatkan API key"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": "localhost:3000/api/marketplace/show-tiket",
+						"description": "Endpoint ini akan menampilkan tiket/history yang dimiliki marketplace. Akan mengembalikan tiga array yaitu approved, rejected, dan pending."
+					},
+					"response": []
+				},
+				{
+					"name": "Pesan Tiket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "5Ca48SjQN0",
+								"description": "Authentication dan Authorization Marketplace. Gunakan endpoint Login Marketplace untuk mendapatkan API key",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id_jadwal",
+									"value": "JW00003",
+									"description": "ID Jadwal yang akan dibeli",
+									"type": "text"
+								},
+								{
+									"key": "nomor_kursi",
+									"value": "B11",
+									"description": "Nomor kursi yang akan dipesan",
+									"type": "text"
+								},
+								{
+									"key": "bukti_pembayaran",
+									"description": "Bukti pembayaran berupa gambar",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": "localhost:3000/api/marketplace/pesan-tiket",
+						"description": "Endpoint ini digunakan marketplace untuk memesan tiket yang tersedia."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Get Pending Tiket",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "admin",
+								"type": "text",
+								"description": "Authentication dan Authorization Admin"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": "https://localhost:3000/api/admin/pending-tiket",
+						"description": "Endpoint akan menampilkan pembayaran tiket yang masih menunggu konfirmasi admin. Bukti pembayaran terletak di folder uploads/tiket."
+					},
+					"response": []
+				},
+				{
+					"name": "Reject Tiket",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "admin",
+								"type": "text",
+								"description": "Authentication dan Authorization Admin"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/admin/reject-tiket/:id_tiket",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"admin",
+								"reject-tiket",
+								":id_tiket"
+							],
+							"variable": [
+								{
+									"key": "id_tiket",
+									"value": "B11JW00003",
+									"description": "id_tiket yang ingin di approve. Lihat di Get Pending Tiket"
+								}
+							]
+						},
+						"description": "Endpoint ini digunakan untuk membatalkan pembelian tiket akibat bukti pembayaran yang disertakan tidak valid. Untuk melihat tiket yang berstatus pending bisa panggil endpoint Get Pending Tiket. Bukti pembayaran terletak di folder uploads/tiket."
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Tiket",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "admin",
+								"type": "text",
+								"description": "Authentication dan Authorization Admin"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/admin/acc-tiket/:id_tiket",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"admin",
+								"acc-tiket",
+								":id_tiket"
+							],
+							"variable": [
+								{
+									"key": "id_tiket",
+									"value": "B11JW00003",
+									"description": "id_tiket yang ingin di approve. Lihat di Get Pending Tiket"
+								}
+							]
+						},
+						"description": "Endpoint ini digunakan untuk mengkonfirmasi pembayaran tiket. Untuk melihat tiket yang berstatus pending bisa panggil endpoint Get Pending Tiket. Bukti pembayaran terletak di folder uploads/tiket."
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm Subscription",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "admin",
+								"type": "text",
+								"description": "Authentication dan Authorization Admin"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/admin/acc-web-review/:id_subscription",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"admin",
+								"acc-web-review",
+								":id_subscription"
+							],
+							"variable": [
+								{
+									"key": "id_subscription",
+									"value": "SCB001",
+									"description": "ID subscription yang masih pending"
+								}
+							]
+						},
+						"description": "Endpoint ini digunakan untuk mengkonfirmasi subscription milik marketplace. Bukti pembayaran akan terletak pada folder uploads/subscription."
+					},
+					"response": []
+				},
+				{
+					"name": "Revoke Marketplace",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "admin",
+								"type": "text",
+								"description": "Authentication dan Authorization Admin"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "localhost:3000/api/admin/revoke-marketplace/:username",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"admin",
+								"revoke-marketplace",
+								":username"
+							],
+							"variable": [
+								{
+									"key": "username",
+									"value": "toped",
+									"description": "Username marketplace yang akan di revoke akunnya."
+								}
+							]
+						},
+						"description": "Endpoint ini digunakan untuk menghapus hak akses akun marketplace. Akun yang direvoke tidak akan bisa memanggil endpoint marketplace manapun. Hal ini dikarenakan akun marketplace memiliki beberapa endpoint GET berisikan informasi bioskop tanpa memerlukan subscription. Untuk menghindari penyalahgunaan akses, maka akun marketplace yang tidak memiliki history transaksi bisa di revoke."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

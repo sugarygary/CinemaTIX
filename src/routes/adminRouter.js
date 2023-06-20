@@ -14,7 +14,7 @@ const {
 adminRouter.put("/acc-tiket/:id_tiket", approveTiket);
 adminRouter.put("/reject-tiket/:id_tiket", rejectTiket);
 adminRouter.get("/pending-tiket", getRequestTiket);
-adminRouter.post("/acc-web-review/:id_subscription", accWebReview);
+adminRouter.put("/acc-web-review/:id_subscription", accWebReview);
 adminRouter.delete("/revoke-marketplace/:username", revokeMarketplace);
 
 module.exports = adminRouter;

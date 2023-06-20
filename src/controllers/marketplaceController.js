@@ -73,6 +73,23 @@ const pesanTiket = async (req, res) => {
       },
     });
     if (find_jadwal) {
+      let today = DateTime.now().setZone("Asia/Jakarta").toJSDate();
+      let date =
+        today.getFullYear() +
+        "-" +
+        (today.getMonth() + 1).toString().padStart(2, "0") +
+        "-" +
+        today.getDate().toString().padStart(2, "0");
+      let time =
+        today.getHours().toString().padStart(2, "0") +
+        ":" +
+        today.getMinutes().toString().padStart(2, "0");
+      let dateTime = date + " " + time;
+      if (find_jadwal.jadwal_tayang < dateTime) {
+        return res.status(400).send({
+          message: "Jadwal sudah melewati tanggal pembelian",
+        });
+      }
       const check_available_kursi = await db.Tiket.findOne({
         where: {
           id_jadwal: {
