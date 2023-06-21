@@ -33,7 +33,11 @@ const pesanTiket = async (req, res) => {
   });
   const upload = multer({
     fileFilter: function (req, file, cb) {
-      if (file.mimetype != "image/jpg" && file.mimetype != "image/jpeg") {
+      if (
+        file.mimetype != "image/jpg" &&
+        file.mimetype != "image/jpeg" &&
+        file.mimetype != "image/png"
+      ) {
         return cb(new Error("Format file salah"), null);
       }
       cb(null, true);

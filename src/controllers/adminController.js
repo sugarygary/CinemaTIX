@@ -41,6 +41,26 @@ const accWebReview = async (req, res) => {
   }
 };
 
+const pendingSubscription = async function (req, res) {
+  let token = req.header("x-api-key");
+  if (!token) {
+    return res.status(401).send({
+      message: "Invalid API Key",
+    });
+  }
+  if (token == HEADER_ADMIN) {
+    let subscription = await db.Subscription.findAll({
+      where: { status: "Pending" },
+      attributes: { exclude: ["status"] },
+    });
+    return res.status(200).send(subscription);
+  } else {
+    return res.status(403).send({
+      message: "Unauthorized access",
+    });
+  }
+};
+
 const approveTiket = async (req, res) => {
   let token = req.header("x-api-key");
   if (!token) {
@@ -49,8 +69,8 @@ const approveTiket = async (req, res) => {
     });
   }
   if (token == HEADER_ADMIN) {
-    let id_tiket = req.params.id_tiket;
-    let history = await db.History.findOne({ where: { id_tiket } });
+    let id_history = req.params.id_history;
+    let history = await db.History.findOne({ where: { id_history } });
     if (!history) {
       return res.status(404).send({
         message: "Tiket tidak ditemukan",
@@ -89,8 +109,8 @@ const rejectTiket = async (req, res) => {
     });
   }
   if (token == HEADER_ADMIN) {
-    let id_tiket = req.params.id_tiket;
-    let history = await db.History.findOne({ where: { id_tiket } });
+    let id_history = req.params.id_history;
+    let history = await db.History.findOne({ where: { id_history } });
     if (!history) {
       return res.status(404).send({
         message: "Tiket tidak ditemukan",
@@ -132,21 +152,86 @@ const getRequestTiket = async (req, res) => {
 };
 
 const revokeMarketplace = async (req, res) => {
-  const username = req.params.username;
-  const marketplace = await db.Marketplace.findByPk(username);
-  if (!marketplace) {
-    return res.status(404).send({ message: "Marketplace tidak ditemukan" });
+  let token = req.header("x-api-key");
+  if (!token) {
+    return res.status(401).send({
+      message: "Invalid API Key",
+    });
   }
-  if (!marketplace.api_key) {
-    return res.status(400).send({ message: "Akun sudah di revoke sebelumnya" });
+  if (token == HEADER_ADMIN) {
+    const username = req.params.username;
+    const marketplace = await db.Marketplace.findByPk(username);
+    if (!marketplace) {
+      return res.status(404).send({ message: "Marketplace tidak ditemukan" });
+    }
+    if (!marketplace.api_key) {
+      return res
+        .status(400)
+        .send({ message: "Akun sudah di revoke sebelumnya" });
+    }
+    await marketplace.update({ api_key: null });
+    return res.status(200).send({ message: "Akun berhasil di revoke" });
+  } else {
+    return res.status(403).send({
+      message: "Unauthorized access",
+    });
   }
-  await marketplace.update({ api_key: null });
-  return res.status(200).send({ message: "Akun berhasil di revoke" });
 };
+
+const detail_pembayaran_subs = async function (req, res) {
+  let token = req.header("x-api-key");
+  if (!token) {
+    return res.status(401).send({
+      message: "Invalid API Key",
+    });
+  }
+  if (token == HEADER_ADMIN) {
+    let subscription = await db.Subscription.findByPk(
+      req.params.id_subscription
+    );
+    if (!subscription) {
+      return res
+        .status(404)
+        .send({ message: "Request subscription tidak ditemukan" });
+    }
+    const nama_file = subscription.bukti_pembayaran;
+    const lokasinya = `uploads/subscription/${nama_file}`;
+    return res.status(200).sendFile(lokasinya, { root: "." });
+  } else {
+    return res.status(403).send({
+      message: "Unauthorized access",
+    });
+  }
+};
+const detail_pembayaran_tiket = async function (req, res) {
+  let token = req.header("x-api-key");
+  if (!token) {
+    return res.status(401).send({
+      message: "Invalid API Key",
+    });
+  }
+  if (token == HEADER_ADMIN) {
+    let history = await db.History.findByPk(req.params.id_history);
+    if (!history) {
+      return res.status(404).send({ message: "Request tiket tidak ditemukan" });
+    }
+    // const nama_file = history.bukti_pembayaran;
+    const lokasinya = `uploads/tiket/${req.params.id_history}.jpg`;
+    return res.status(200).sendFile(lokasinya, { root: "." });
+  } else {
+    return res.status(403).send({
+      message: "Unauthorized access",
+    });
+  }
+};
+
 module.exports = {
   accWebReview,
   approveTiket,
   rejectTiket,
   getRequestTiket,
   revokeMarketplace,
+  detail_pembayaran_subs,
+  detail_pembayaran_tiket,
+  pendingSubscription,
 };

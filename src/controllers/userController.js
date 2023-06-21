@@ -79,7 +79,7 @@ const registerBioskop = async (req, res) => {
       nama: validationResult.nama,
     });
   } catch (error) {
-    return res.status(400).send(error.message);
+    return res.status(400).send({ message: error.message });
   }
 };
 
@@ -211,7 +211,7 @@ const registerWebReview = async (req, res) => {
       nama_web_review: validationResult.nama_web_review,
     });
   } catch (error) {
-    return res.status(400).send(error.message);
+    return res.status(400).send({ message: error.message });
   }
 };
 const checkLogin_WebReview_username = async (username) => {
@@ -272,7 +272,7 @@ const loginWebReview = async (req, res) => {
       });
     }
   } catch (error) {
-    return res.status(400).send(error.message);
+    return res.status(400).send({ message: error.message });
   }
 };
 
