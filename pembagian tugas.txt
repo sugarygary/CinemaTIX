@@ -5,4 +5,4 @@ daniel niko
 evan richard
 -marketplace
 felix
--regis,login,add cabang,add studio, bantuin konfirmasi admin dan multer
+-regis akun,login akun,add cabang,add studio, bantuin konfirmasi admin dan multer
