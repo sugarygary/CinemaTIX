@@ -1,0 +1,8 @@
+christian gary
+-add jadwal film,show history, edit tiket, delete cabang, merapihkan code, bug testing, hosting
+daniel niko
+-webreview
+evan richard
+-marketplace
+felix
+-regis,login,add cabang,add studio, bantuin konfirmasi admin dan multer
