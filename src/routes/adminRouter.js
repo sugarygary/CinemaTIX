@@ -14,8 +14,8 @@ const {
   pendingSubscription,
 } = require("../controllers/adminController");
 
-adminRouter.put("/acc-tiket/:id_tiket", approveTiket);
-adminRouter.put("/reject-tiket/:id_tiket", rejectTiket);
+adminRouter.put("/acc-tiket/:id_history", approveTiket);
+adminRouter.put("/reject-tiket/:id_history", rejectTiket);
 adminRouter.put("/acc-web-review/:id_subscription", accWebReview);
 adminRouter.delete("/revoke-marketplace/:username", revokeMarketplace);
 adminRouter.get("/pending-tiket", getRequestTiket);
